@@ -26,9 +26,9 @@ return new class extends Migration
     {
         Schema::create('document_signatures', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('document_id')->constrained()->cascadeOnDelete();
+            $table->nullable()->foreignId('document_id')->constrained()->cascadeOnDelete();
 
-            $table->foreignId('signer_id')->constrained('users');
+            $table->nullable()->foreignId('signer_id')->constrained('users');
 
             // The role held at the moment of signing. Stored rather than
             // derived, because a person's role may change afterwards.
