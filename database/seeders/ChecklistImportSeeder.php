@@ -27,6 +27,18 @@ class ChecklistImportSeeder extends Seeder
     {
         $legacy = DB::connection('legacy');
 
+        try {
+            $legacy->getPdo();
+        } catch (\Throwable $e) {
+            /* Reported and skipped rather than thrown, so a server without
+               the old database still seeds everything else. */
+            $this->command->warn('Legacy database unreachable — checklist import skipped.');
+            $this->command->line('  ' . $e->getMessage());
+            $this->command->line('  Set LEGACY_DB_* in .env, then: php artisan db:seed --class=ChecklistImportSeeder --force');
+
+            return;
+        }
+
         foreach (self::TYPE_MAP as $legacyTypeId => $meta) {
 
             if (ChecklistTemplate::where('type_code', $meta['code'])->exists()) {
@@ -34,54 +46,64 @@ class ChecklistImportSeeder extends Seeder
                 continue;
             }
 
-            $template = ChecklistTemplate::create([
-                'type_code'      => $meta['code'],
-                'version'        => 1,
-                'name'           => $meta['name'],
-                'effective_from' => now()->toDateString(),
-                'published_at'   => now(),
+            /* One transaction per template: a read that fails midway would
+               otherwise leave a template with no sections behind, and the
+               check above would then skip it for good on the next run. */
+            DB::transaction(function () use ($legacy, $legacyTypeId, $meta) {
+                $this->importType($legacy, $legacyTypeId, $meta);
+            });
+        }
+    }
+
+    private function importType($legacy, int $legacyTypeId, array $meta): void
+    {
+        $template = ChecklistTemplate::create([
+            'type_code'      => $meta['code'],
+            'version'        => 1,
+            'name'           => $meta['name'],
+            'effective_from' => now()->toDateString(),
+            'published_at'   => now(),
+        ]);
+
+        $sections = $legacy->select(
+            'SELECT id, section_number, title, sort_order
+             FROM checklist_sections WHERE entity_type_id = ? ORDER BY sort_order',
+            [$legacyTypeId]
+        );
+
+        $items = 0;
+
+        foreach ($sections as $s) {
+            $section = ChecklistSection::create([
+                'template_id'    => $template->id,
+                'section_number' => $s->section_number,
+                'title'          => $s->title,
+                'sort_order'     => $s->sort_order ?? 0,
             ]);
 
-            $sections = $legacy->select(
-                'SELECT id, section_number, title, sort_order
-                 FROM checklist_sections WHERE entity_type_id = ? ORDER BY sort_order',
-                [$legacyTypeId]
+            $rows = $legacy->select(
+                'SELECT item_code, label, max_score, sort_order
+                 FROM checklist_items WHERE section_id = ? ORDER BY sort_order',
+                [$s->id]
             );
 
-            $items = 0;
-
-            foreach ($sections as $s) {
-                $section = ChecklistSection::create([
-                    'template_id'    => $template->id,
-                    'section_number' => $s->section_number,
-                    'title'          => $s->title,
-                    'sort_order'     => $s->sort_order ?? 0,
+            foreach ($rows as $r) {
+                ChecklistItem::create([
+                    'section_id' => $section->id,
+                    'item_code'  => $r->item_code,
+                    'label'      => $r->label,
+                    'max_score'  => $r->max_score ?? 0,
+                    'sort_order' => $r->sort_order ?? 0,
                 ]);
-
-                $rows = $legacy->select(
-                    'SELECT item_code, label, max_score, sort_order
-                     FROM checklist_items WHERE section_id = ? ORDER BY sort_order',
-                    [$s->id]
-                );
-
-                foreach ($rows as $r) {
-                    ChecklistItem::create([
-                        'section_id' => $section->id,
-                        'item_code'  => $r->item_code,
-                        'label'      => $r->label,
-                        'max_score'  => $r->max_score ?? 0,
-                        'sort_order' => $r->sort_order ?? 0,
-                    ]);
-                    $items++;
-                }
+                $items++;
             }
-
-            $total = ChecklistItem::whereIn('section_id', $template->sections()->pluck('id'))->sum('max_score');
-
-            $this->command->info(sprintf(
-                '%s: %d sections, %d items, %s points total.',
-                $meta['name'], count($sections), $items, rtrim(rtrim(number_format((float) $total, 2), '0'), '.')
-            ));
         }
+
+        $total = ChecklistItem::whereIn('section_id', $template->sections()->pluck('id'))->sum('max_score');
+
+        $this->command->info(sprintf(
+            '%s: %d sections, %d items, %s points total.',
+            $meta['name'], count($sections), $items, rtrim(rtrim(number_format((float) $total, 2), '0'), '.')
+        ));
     }
 }

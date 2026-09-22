@@ -54,7 +54,7 @@ class MigrateLegacyData extends Command
         }
 
         if (empty($itemMap)) {
-            $this->error('No checklist templates found. Run: php artisan db:seed --class=ChecklistImportSeeder');
+            $this->error('No checklist templates found. Run: php artisan db:seed --force');
             return self::FAILURE;
         }
 

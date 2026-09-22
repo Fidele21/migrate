@@ -37,8 +37,12 @@ class DatabaseSeeder extends Seeder
         UserSeeder::class,
 
         /* Checklists. Each creates a versioned template with its
-           sections and weighted items, in the order they were written. */
-        ChecklistImportSeeder::class,
+           sections and weighted items, in the order they were written.
+
+           ChecklistImportSeeder is deliberately absent: it copies the
+           building and petrol checklists out of the old cPanel database,
+           which v1 does not ship with. Run it by hand once LEGACY_DB_*
+           points somewhere real. */
         BuildingChecklistV2Seeder::class,
         ConstructionChecklistSeeder::class,
         DeskReviewChecklistSeeder::class,
