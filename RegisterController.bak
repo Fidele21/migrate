@@ -1,0 +1,234 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Entity;
+use App\Models\Inspection;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
+/**
+ * The inspection register.
+ *
+ * One row per premises, showing how many times it has been inspected
+ * and the outcome of the most recent visit. Reads the native tables,
+ * not the legacy database.
+ */
+class RegisterController extends Controller
+{
+    /** Compliance bands used for the deliberation filter. */
+    public const DELIBERATIONS = [
+        'compliant'  => ['label' => 'Compliant',          'min' => 85,  'max' => 100],
+        'minor'      => ['label' => 'Minor observations', 'min' => 70,  'max' => 84.99],
+        'corrective' => ['label' => 'Corrective notice',  'min' => 50,  'max' => 69.99],
+        'enforcement'=> ['label' => 'Enforcement action', 'min' => 0,   'max' => 49.99],
+    ];
+
+    public function index(Request $request, string $code)
+    {
+        $type = InspectionTypeController::resolve($code);
+
+        $query = $this->build($request, $code);
+        $rows  = $query->get();
+
+        if ($export = $request->query('export')) {
+            return $this->export($export, $rows, $type, $this->describeFilters($request));
+        }
+
+        return view('register.index', [
+            'type'       => $type,
+            'rows'       => $rows,
+            'filters'    => $request->only(['upi', 'name', 'date_from', 'date_to', 'deliberation', 'visits', 'district']),
+            'districts'  => Entity::where('type_code', $code)->whereNotNull('district')
+                                  ->distinct()->orderBy('district')->pluck('district'),
+            'summary'    => $this->summarise($rows),
+        ]);
+    }
+
+    /* ------------------------------------------------------------ */
+
+    private function build(Request $request, string $code)
+    {
+        $latest = fn (string $column) => Inspection::select($column)
+            ->whereColumn('entity_id', 'entities.id')
+            ->whereNull('deleted_at')
+            ->orderByDesc('inspection_date')->orderByDesc('id')
+            ->limit(1);
+
+        $query = Entity::query()
+            ->where('type_code', $code)
+            ->whereHas('inspections')
+            ->withCount(['inspections' => fn ($q) => $q->whereNull('deleted_at')])
+            ->addSelect('entities.*')
+            ->addSelect(['last_date'       => $latest('inspection_date')])
+            ->addSelect(['compliance'      => $latest('compliance')])
+            ->addSelect(['last_inspection' => $latest('id')])
+            ->addSelect(['inspector'       => $latest('inspector_name')]);
+
+        if ($upi = trim((string) $request->query('upi'))) {
+            $query->where('upi', 'like', "%{$upi}%");
+        }
+
+        if ($name = trim((string) $request->query('name'))) {
+            $query->where(function ($q) use ($name) {
+                $q->where('name', 'like', "%{$name}%")
+                  ->orWhere('owner', 'like', "%{$name}%");
+            });
+        }
+
+        if ($district = $request->query('district')) {
+            $query->where('district', $district);
+        }
+
+        if ($from = $request->query('date_from')) {
+            $query->whereHas('inspections', fn ($q) => $q->whereDate('inspection_date', '>=', $from));
+        }
+
+        if ($to = $request->query('date_to')) {
+            $query->whereHas('inspections', fn ($q) => $q->whereDate('inspection_date', '<=', $to));
+        }
+
+        // Alias filters run in HAVING because they depend on subqueries.
+        if ($d = $request->query('deliberation')) {
+            if (isset(self::DELIBERATIONS[$d])) {
+                $band = self::DELIBERATIONS[$d];
+                $query->havingBetween('compliance', [$band['min'], $band['max']]);
+            }
+        }
+
+        if ($visits = $request->query('visits')) {
+            if ($visits === 'once') {
+                $query->having('inspections_count', '=', 1);
+            } elseif ($visits === 'repeat') {
+                $query->having('inspections_count', '>', 1);
+            } elseif (is_numeric($visits)) {
+                $query->having('inspections_count', '>=', (int) $visits);
+            }
+        }
+        if ($band = $request->query('band')) {
+            $query->when($band === 'compliant',
+                fn ($q) => $q->having('compliance', '>=', 98));
+            $query->when($band === 'uncompliant',
+                fn ($q) => $q->having('compliance', '<', 98));
+            $query->when($band === 'permanent',
+                fn ($q) => $q->having('compliance', '<', 50));
+            $query->when($band === 'temporary',
+                fn ($q) => $q->havingBetween('compliance', [50, 69.99]));
+            $query->when($band === 'improve',
+                fn ($q) => $q->havingBetween('compliance', [70, 97.99]));
+        }
+
+        return $query->orderBy('compliance');
+    }
+
+    private function summarise($rows): array
+    {
+        $scores = $rows->pluck('compliance')->filter()->map(fn ($v) => (float) $v);
+
+        return [
+            'premises'    => $rows->count(),
+            'inspections' => $rows->sum('inspections_count'),
+            'mean'        => $scores->count() ? round($scores->avg(), 1) : 0,
+            'repeat'      => $rows->where('inspections_count', '>', 1)->count(),
+            'below70'     => $scores->filter(fn ($v) => $v < 70)->count(),
+        ];
+    }
+
+    private function describeFilters(Request $request): array
+    {
+        $out = [];
+
+        if ($v = $request->query('upi'))      $out['UPI contains'] = $v;
+        if ($v = $request->query('name'))     $out['Name or owner contains'] = $v;
+        if ($v = $request->query('district')) $out['District'] = $v;
+        if ($v = $request->query('date_from'))$out['Inspected from'] = $v;
+        if ($v = $request->query('date_to'))  $out['Inspected to'] = $v;
+
+        if ($v = $request->query('deliberation')) {
+            $out['Deliberation'] = self::DELIBERATIONS[$v]['label'] ?? $v;
+        }
+
+        if ($v = $request->query('visits')) {
+            $out['Inspections'] = match ($v) {
+                'once'   => 'Inspected once only',
+                'repeat' => 'Inspected more than once',
+                default  => "At least {$v}",
+            };
+        }
+
+        return $out;
+    }
+
+    /* ------------------------------------------------------------
+       Export — the Report column is deliberately omitted
+       ------------------------------------------------------------ */
+
+    private function export(string $format, $rows, array $type, array $filters)
+    {
+        abort_unless(auth()->user()->can('export.excel') || auth()->user()->can('export.pdf'), 403);
+
+        if ($format === 'pdf') {
+            return view('register.print', compact('rows', 'type', 'filters'));
+        }
+
+        return $this->csv($rows, $type, $filters);
+    }
+
+    private function csv($rows, array $type, array $filters): StreamedResponse
+    {
+        $filename = 'inspection-register-' . $type['code'] . '-' . now()->format('Y-m-d') . '.csv';
+
+        return response()->streamDownload(function () use ($rows, $type, $filters) {
+            $out = fopen('php://output', 'w');
+
+            // BOM so Excel reads UTF-8 correctly.
+            fwrite($out, "\xEF\xBB\xBF");
+
+            fputcsv($out, ['CITY OF KIGALI']);
+            fputcsv($out, ['Directorate of Inspection']);
+            fputcsv($out, [$type['name'] . ' — Inspection Register']);
+            fputcsv($out, ['Generated', now()->format('j F Y, H:i')]);
+
+            foreach ($filters as $label => $value) {
+                fputcsv($out, [$label, $value]);
+            }
+
+            fputcsv($out, ['Premises listed', $rows->count()]);
+            fputcsv($out, []);
+
+            fputcsv($out, [
+                '#', 'UPI', 'Zoning', 'Owner', $type['name'] . ' Name',
+                'District', 'Sector', 'Date of Inspection',
+                'Compliance (%)', 'Inspections', 'Deliberation',
+            ]);
+
+            foreach ($rows as $n => $r) {
+                fputcsv($out, [
+                    $n + 1,
+                    $r->upi ?: '',
+                    $r->zoning ?: '',
+                    $r->owner ?: '',
+                    $r->name,
+                    $r->district ?: '',
+                    $r->sector ?: '',
+                    $r->last_date,
+                    number_format((float) $r->compliance, 2, '.', ''),
+                    $r->inspections_count,
+                    self::deliberationFor((float) $r->compliance)[0],
+                ]);
+            }
+
+            fclose($out);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    public static function deliberationFor(float $pct): array
+    {
+        if ($pct >= 85) return ['Compliant', 'good'];
+        if ($pct >= 70) return ['Minor observations', 'fair'];
+        if ($pct >= 50) return ['Corrective notice', 'weak'];
+        return ['Enforcement action', 'poor'];
+    }
+}

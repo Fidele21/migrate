@@ -1,0 +1,46 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class ChecklistTemplate extends Model
+{
+    protected $fillable = [
+        'type_code', 'version', 'name', 'effective_from',
+        'effective_to', 'published_at', 'published_by','stage',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'effective_from' => 'date',
+            'effective_to'   => 'date',
+            'published_at'   => 'datetime',
+        ];
+    }
+
+    public function sections(): HasMany
+    {
+        return $this->hasMany(ChecklistSection::class, 'template_id')->orderBy('sort_order');
+    }
+
+    /** The template currently in force for a category. */
+    public function isPublished(): bool { return $this->published_at !== null; }
+    /**
+     * The published checklist for a category, and stage where one applies.
+     *
+     * Ongoing construction has two: substructure work is buried before
+     * superstructure begins, so the two cannot share a checklist.
+     */
+    public static function current(string $code, ?string $stage = null): ?self
+    {
+        return static::where('type_code', $code)
+            ->when($stage, fn ($q) => $q->where('stage', $stage))
+            ->when(! $stage, fn ($q) => $q->whereNull('stage'))
+            ->whereNotNull('published_at')
+            ->orderByDesc('version')
+            ->first();
+    }
+}

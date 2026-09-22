@@ -1,0 +1,1035 @@
+@extends('layouts.app')
+@section('title', $visitType === 'followup' ? 'Follow-up — Wastewater Management Inspection' : 'Wastewater Management Inspection')
+
+@section('content')
+
+@php
+  use App\Models\WastewaterInspection as WW;
+  $ww  = $ww ?? new WW();
+  $old = fn ($field, $default = null) => old("ww.$field", data_get($ww, $field, $default));
+  $existingUpis = $entity?->upis->pluck('upi')->all() ?? [];
+  if (empty($existingUpis)) { $existingUpis = ['']; }
+@endphp
+
+<div class="wwp-head">
+  <div class="wwp-crumb">Environment Protection &middot; Wastewater Management Inspection</div>
+  <h2>{{ $visitType === 'followup' ? 'Follow-up Inspection' : 'New Inspection' }}</h2>
+  <p>
+    A record of what was found, ending in the inspector's own judgement
+    &mdash; not a checklist, and nothing here is scored.
+  </p>
+</div>
+
+@if($errors->any())
+  <div class="wwp-errors">
+    @foreach($errors->all() as $e)&bull; {{ $e }}<br>@endforeach
+  </div>
+@endif
+
+<form method="post" action="{{ $action }}" id="ww-form" enctype="multipart/form-data">
+  @csrf
+  @if($inspection)@method('PUT')@endif
+
+  {{-- ══════════ Premises Particulars ══════════ --}}
+  <section class="wwp-block">
+    <h3>Premises Particulars</h3>
+    <div class="wwp-desc">Who the City is corresponding with, and where this is.</div>
+
+    <div class="wwp-grid">
+      <div class="wwp-field wwp-wide">
+        <label class="wwp-lbl">Premises name <span class="req">*</span></label>
+        <input type="text" class="wwp-in" name="name" required maxlength="200"
+               value="{{ old('name', $entity->name ?? '') }}">
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Owner <span class="req">*</span></label>
+        <input type="text" class="wwp-in" name="owner" required maxlength="160"
+               value="{{ old('owner', $entity->owner ?? '') }}">
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">TIN Number</label>
+        <input type="text" class="wwp-in" name="ww[tin_number]" maxlength="20"
+               value="{{ $old('tin_number') }}" placeholder="1 0 0 1 2 3 4 5 6">
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Telephone <span class="req">*</span></label>
+        <input type="text" class="wwp-in" name="telephone" required maxlength="40"
+               value="{{ old('telephone', $entity->telephone ?? '') }}">
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Email <span class="req">*</span></label>
+        <input type="email" class="wwp-in" name="email" required maxlength="180"
+               value="{{ old('email', $entity->email ?? '') }}">
+      </div>
+
+      <div class="wwp-field wwp-wide">
+        <label class="wwp-lbl">Building Use <span class="req">*</span></label>
+
+        @php
+          $useVal = old('use_type', $entity->use_type ?? '');
+          $useLabels = WW::BUILDING_USES;
+          $useIsKnown = in_array($useVal, $useLabels, true);
+        @endphp
+
+        <select class="wwp-in" id="use_type_select">
+          <option value="">Choose</option>
+          @foreach($useLabels as $k => $label)
+            <option value="{{ $label }}" @selected($useVal === $label)>{{ $label }}</option>
+          @endforeach
+        </select>
+
+        <input type="hidden" name="use_type" id="use_type_hidden" value="{{ $useVal }}" required>
+
+        <input type="text" class="wwp-in" id="use_type_other"
+               placeholder="If Other, specify"
+               value="{{ $useIsKnown ? '' : $useVal }}"
+               style="{{ ($useVal === 'Other' || (!$useIsKnown && $useVal !== '')) ? '' : 'display:none' }};margin-top:8px">
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Zoning</label>
+        <select class="wwp-in" name="zoning">
+          <option value="">Not established</option>
+          @foreach(config('zoning') as $group => $codes)
+            <optgroup label="{{ $group }}">
+              @foreach($codes as $code => $label)
+                <option value="{{ $code }}" @selected(old('zoning', $entity->zoning ?? '') === $code)>{{ $label }}</option>
+              @endforeach
+            </optgroup>
+          @endforeach
+        </select>
+      </div>
+
+      <div class="wwp-field wwp-wide">
+        <label class="wwp-lbl">Parcel identifier (UPI)</label>
+        <div id="upi-list">
+          @foreach(old('upis', $existingUpis) as $i => $upi)
+            <div class="wwp-upi-row">
+              <input type="text" class="wwp-in" name="upis[]" value="{{ $upi }}"
+                     placeholder="1/02/05/03/4745">
+              @if($i === 0)
+                <button type="button" class="btn btn-ghost btn-sm" id="upi-add">Add another</button>
+              @else
+                <button type="button" class="btn btn-ghost btn-sm wwp-upi-remove">Remove</button>
+              @endif
+            </div>
+          @endforeach
+        </div>
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">District <span class="req">*</span></label>
+        <select class="wwp-in" name="district" id="wwp-district" required>
+          <option value="">Choose</option>
+          @foreach(array_keys(config('kigali')) as $d)
+            <option value="{{ $d }}" @selected(old('district', $entity->district ?? '') === $d)>{{ $d }}</option>
+          @endforeach
+        </select>
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Sector <span class="req">*</span></label>
+        <select class="wwp-in" name="sector" id="wwp-sector" required>
+          <option value="">Choose the district first</option>
+        </select>
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Cell <span class="req">*</span></label>
+        <select class="wwp-in" name="cell" id="wwp-cell" required>
+          <option value="">Choose the sector first</option>
+        </select>
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Village</label>
+        <input type="text" class="wwp-in" name="ww[village]" maxlength="120"
+               value="{{ $old('village') }}">
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">GPS &mdash; latitude</label>
+        <input type="number" class="wwp-in" name="latitude" id="wwp-lat" step="0.0000001"
+               value="{{ old('latitude', $entity->latitude ?? '') }}" placeholder="-1.9441">
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">GPS &mdash; longitude</label>
+        <input type="number" class="wwp-in" name="longitude" id="wwp-lng" step="0.0000001"
+               value="{{ old('longitude', $entity->longitude ?? '') }}" placeholder="30.0619">
+      </div>
+
+      <div class="wwp-field wwp-wide">
+        <button type="button" class="btn btn-ghost btn-sm" id="wwp-gps-capture">Capture current position</button>
+        <div class="wwp-note" id="wwp-gps-note">Uses this device's position, or type the coordinates if known.</div>
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Date of inspection <span class="req">*</span></label>
+        <input type="date" class="wwp-in" name="inspection_date" required max="{{ date('Y-m-d') }}"
+               value="{{ old('inspection_date', $inspection?->inspection_date?->format('Y-m-d') ?? date('Y-m-d')) }}">
+      </div>
+    </div>
+  </section>
+
+  {{-- ══════════ Section 1: Inspection Information ══════════ --}}
+  <section class="wwp-block">
+    <h3>1. Inspection Information</h3>
+
+    <div class="wwp-grid">
+      <div class="wwp-field wwp-wide">
+        <label class="wwp-lbl">Inspection Type</label>
+        <select class="wwp-in" name="ww[inspection_type]" id="ww_inspection_type">
+          <option value="">&mdash; Select &mdash;</option>
+          @foreach(WW::INSPECTION_TYPES as $k => $label)
+            <option value="{{ $k }}" @selected($old('inspection_type') === $k)>{{ $label }}</option>
+          @endforeach
+        </select>
+      </div>
+    </div>
+  </section>
+
+  {{-- ══════════ Section 2: Wastewater Management System ══════════ --}}
+  <section class="wwp-block">
+    <h3>2. Wastewater Management System</h3>
+    <div class="wwp-desc">What is found here decides which of the sections below applies.</div>
+
+    <div class="wwp-grid">
+      <div class="wwp-field wwp-wide">
+        <label class="wwp-lbl">Type of Wastewater System</label>
+        <select class="wwp-in" name="ww[system_type]" id="ww_system_type"
+                data-system-type data-toggle-other="system_type_other">
+          <option value="">&mdash; Select &mdash;</option>
+          @foreach(WW::SYSTEM_TYPES as $k => $label)
+            <option value="{{ $k }}" @selected($old('system_type') === $k)>{{ $label }}</option>
+          @endforeach
+        </select>
+        <input type="text" class="wwp-in" name="ww[system_type_other]" id="system_type_other"
+               placeholder="If Other, specify" maxlength="120"
+               value="{{ $old('system_type_other') }}"
+               style="{{ $old('system_type') === 'other' ? '' : 'display:none' }};margin-top:8px">
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Design Capacity (m&sup3;/day)</label>
+        <input type="number" class="wwp-in" name="ww[design_capacity_m3]" step="0.01" min="0"
+               value="{{ $old('design_capacity_m3') }}">
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Estimated Population Served</label>
+        <input type="number" class="wwp-in" name="ww[population_served]" min="0"
+               value="{{ $old('population_served') }}">
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Current Water Consumption (m&sup3;/day)</label>
+        <input type="number" class="wwp-in" name="ww[water_consumption_m3]" step="0.01" min="0"
+               value="{{ $old('water_consumption_m3') }}">
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Year Constructed</label>
+        <input type="number" class="wwp-in" name="ww[year_constructed]" min="1950" max="{{ date('Y') }}"
+               value="{{ $old('year_constructed') }}">
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Maintenance Company</label>
+        <input type="text" class="wwp-in" name="ww[maintenance_company]" maxlength="255"
+               value="{{ $old('maintenance_company') }}">
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Last Maintenance Date</label>
+        <input type="date" class="wwp-in" name="ww[last_maintenance_date]" max="{{ date('Y-m-d') }}"
+               value="{{ $old('last_maintenance_date') ? \Carbon\Carbon::parse($old('last_maintenance_date'))->format('Y-m-d') : '' }}">
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Date of Last Desludging</label>
+        <input type="date" class="wwp-in" name="ww[last_desludging_date]" max="{{ date('Y-m-d') }}"
+               value="{{ $old('last_desludging_date') ? \Carbon\Carbon::parse($old('last_desludging_date'))->format('Y-m-d') : '' }}">
+      </div>
+
+      <div class="wwp-field wwp-wide">
+        <label class="wwp-lbl">Desludging Frequency</label>
+        <select class="wwp-in" name="ww[desludging_frequency]">
+          <option value="">&mdash; Select &mdash;</option>
+          @foreach(WW::DESLUDGING_FREQUENCIES as $k => $label)
+            <option value="{{ $k }}" @selected($old('desludging_frequency') === $k)>{{ $label }}</option>
+          @endforeach
+        </select>
+      </div>
+    </div>
+  </section>
+
+  {{-- ══════════ Section 3: Septic Tank System Details ══════════ --}}
+  <section class="wwp-block wwp-conditional" data-shows-for="septic_tank"
+            style="{{ $old('system_type') === 'septic_tank' ? '' : 'display:none' }}">
+    <h3>3. Septic Tank System Details</h3>
+    <div class="wwp-desc">Complete this section only if the wastewater system is a Septic Tank.</div>
+
+    <div class="wwp-grid">
+      <div class="wwp-field wwp-wide">
+        <label class="wwp-lbl">Septic Tank Type</label>
+        <select class="wwp-in" name="ww[septic_tank_type]">
+          <option value="">&mdash; Select &mdash;</option>
+          @foreach(WW::SEPTIC_TANK_TYPES as $k => $label)
+            <option value="{{ $k }}" @selected($old('septic_tank_type') === $k)>{{ $label }}</option>
+          @endforeach
+        </select>
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Number of Chambers</label>
+        <input type="number" class="wwp-in" name="ww[septic_chamber_count]" min="1" max="10"
+               value="{{ $old('septic_chamber_count') }}">
+      </div>
+
+      <div class="wwp-field wwp-wide">
+        <label class="wwp-lbl">Tank Material</label>
+        <select class="wwp-in" name="ww[septic_tank_material]" id="septic_tank_material"
+                data-toggle-other="septic_tank_material_other">
+          <option value="">&mdash; Select &mdash;</option>
+          @foreach(WW::SEPTIC_TANK_MATERIALS as $k => $label)
+            <option value="{{ $k }}" @selected($old('septic_tank_material') === $k)>{{ $label }}</option>
+          @endforeach
+        </select>
+        <input type="text" class="wwp-in" name="ww[septic_tank_material_other]" id="septic_tank_material_other"
+               placeholder="If Other, specify" maxlength="120"
+               value="{{ $old('septic_tank_material_other') }}"
+               style="{{ $old('septic_tank_material') === 'other' ? '' : 'display:none' }};margin-top:8px">
+      </div>
+
+      <div class="wwp-field wwp-wide">
+        <label class="wwp-lbl">Tank Location</label>
+        <select class="wwp-in" name="ww[septic_tank_location]" id="septic_tank_location"
+                data-toggle-other="septic_tank_location_other">
+          <option value="">&mdash; Select &mdash;</option>
+          @foreach(WW::SEPTIC_TANK_LOCATIONS as $k => $label)
+            <option value="{{ $k }}" @selected($old('septic_tank_location') === $k)>{{ $label }}</option>
+          @endforeach
+        </select>
+        <input type="text" class="wwp-in" name="ww[septic_tank_location_other]" id="septic_tank_location_other"
+               placeholder="If Other, specify" maxlength="120"
+               value="{{ $old('septic_tank_location_other') }}"
+               style="{{ $old('septic_tank_location') === 'other' ? '' : 'display:none' }};margin-top:8px">
+      </div>
+    </div>
+
+    <h4 class="wwp-subhead">Septic Tank Components</h4>
+    <div class="wwp-table-wrap">
+      <table class="wwp-grid-table">
+        <thead>
+          <tr>
+            <th>Component</th>
+            @foreach(WW::CONDITION_RATINGS as $rk => $rlabel)<th>{{ $rlabel }}</th>@endforeach
+          </tr>
+        </thead>
+        <tbody>
+          @php $septicVals = old('ww.septic_components', $ww->septic_components ?? []); @endphp
+          @foreach(WW::SEPTIC_COMPONENTS as $ck => $clabel)
+            <tr>
+              <td>{{ $clabel }}</td>
+              @foreach(WW::CONDITION_RATINGS as $rk => $rlabel)
+                <td class="wwp-radio-cell">
+                  <input type="radio" name="ww[septic_components][{{ $ck }}]" value="{{ $rk }}"
+                         @checked(($septicVals[$ck] ?? null) === $rk)>
+                </td>
+              @endforeach
+            </tr>
+          @endforeach
+        </tbody>
+      </table>
+    </div>
+
+    <div class="wwp-grid" style="margin-top:16px">
+      <div class="wwp-field">
+        <label class="wwp-lbl">Absorption Field / Soakaway Present?</label>
+        <div class="wwp-yn">
+          <label><input type="radio" name="ww[has_absorption_field]" value="1" @checked($old('has_absorption_field') === '1' || $old('has_absorption_field') === true)> Yes</label>
+          <label><input type="radio" name="ww[has_absorption_field]" value="0" @checked($old('has_absorption_field') === '0' || $old('has_absorption_field') === false)> No</label>
+        </div>
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Condition of Absorption Field</label>
+        <select class="wwp-in" name="ww[absorption_field_condition]">
+          <option value="">&mdash; Select &mdash;</option>
+          @foreach(WW::ABSORPTION_FIELD_CONDITIONS as $k => $label)
+            <option value="{{ $k }}" @selected($old('absorption_field_condition') === $k)>{{ $label }}</option>
+          @endforeach
+        </select>
+      </div>
+
+      <div class="wwp-field wwp-wide">
+        <label class="wwp-lbl">Effluent Disposal After Septic Tank</label>
+        <select class="wwp-in" name="ww[effluent_disposal_method]">
+          <option value="">&mdash; Select &mdash;</option>
+          @foreach(WW::EFFLUENT_DISPOSAL_METHODS as $k => $label)
+            <option value="{{ $k }}" @selected($old('effluent_disposal_method') === $k)>{{ $label }}</option>
+          @endforeach
+        </select>
+      </div>
+
+      @foreach([
+          'signs_of_leakage'          => 'Signs of Leakage / Seepage Around Tank?',
+          'signs_of_overflow'         => 'Signs of Overflow or Surface Ponding?',
+          'structural_damage_visible' => 'Structural Cracks / Damage Visible?',
+          'odour_detected'            => 'Odour Detected Near Tank?',
+      ] as $field => $label)
+        <div class="wwp-field">
+          <label class="wwp-lbl">{{ $label }}</label>
+          <div class="wwp-yn">
+            <label><input type="radio" name="ww[{{ $field }}]" value="1" @checked($old($field) === '1' || $old($field) === true)> Yes</label>
+            <label><input type="radio" name="ww[{{ $field }}]" value="0" @checked($old($field) === '0' || $old($field) === false)> No</label>
+          </div>
+        </div>
+      @endforeach
+
+      <div class="wwp-field wwp-wide">
+        <label class="wwp-lbl">Vacuum Truck / Desludging Service Provider</label>
+        <input type="text" class="wwp-in" name="ww[desludging_provider]" maxlength="255"
+               value="{{ $old('desludging_provider') }}">
+      </div>
+
+      <div class="wwp-field wwp-wide">
+        <label class="wwp-lbl">Estimated Tank Adequacy for Population Served</label>
+        <select class="wwp-in" name="ww[tank_adequacy]">
+          <option value="">&mdash; Select &mdash;</option>
+          @foreach(WW::TANK_ADEQUACY as $k => $label)
+            <option value="{{ $k }}" @selected($old('tank_adequacy') === $k)>{{ $label }}</option>
+          @endforeach
+        </select>
+      </div>
+    </div>
+  </section>
+
+  {{-- ══════════ Section 4: Operational Status ══════════ --}}
+  <section class="wwp-block wwp-conditional" data-shows-for="stp"
+            style="{{ $old('system_type') === 'stp' ? '' : 'display:none' }}">
+    <h3>4. Operational Status</h3>
+
+    <div class="wwp-grid">
+      <div class="wwp-field wwp-wide">
+        <label class="wwp-lbl">Operational Status</label>
+        <select class="wwp-in" name="ww[operational_status]">
+          <option value="">&mdash; Select &mdash;</option>
+          @foreach(WW::OPERATIONAL_STATUSES as $k => $label)
+            <option value="{{ $k }}" @selected($old('operational_status') === $k)>{{ $label }}</option>
+          @endforeach
+        </select>
+      </div>
+    </div>
+
+    <h4 class="wwp-subhead">Technical Components</h4>
+    <div class="wwp-table-wrap">
+      <table class="wwp-grid-table">
+        <thead>
+          <tr>
+            <th>Component</th>
+            @foreach(WW::CONDITION_RATINGS as $rk => $rlabel)<th>{{ $rlabel }}</th>@endforeach
+          </tr>
+        </thead>
+        <tbody>
+          @php $stpVals = old('ww.stp_components', $ww->stp_components ?? []); @endphp
+          @foreach(WW::STP_COMPONENTS as $ck => $clabel)
+            <tr>
+              <td>{{ $clabel }}</td>
+              @foreach(WW::CONDITION_RATINGS as $rk => $rlabel)
+                <td class="wwp-radio-cell">
+                  <input type="radio" name="ww[stp_components][{{ $ck }}]" value="{{ $rk }}"
+                         @checked(($stpVals[$ck] ?? null) === $rk)>
+                </td>
+              @endforeach
+            </tr>
+          @endforeach
+        </tbody>
+      </table>
+    </div>
+
+    <div class="wwp-field wwp-wide" style="margin-top:16px">
+      <label class="wwp-lbl">General Condition</label>
+      <textarea class="wwp-in" name="ww[general_condition]" rows="3">{{ $old('general_condition') }}</textarea>
+    </div>
+  </section>
+
+  {{-- ══════════ Section 5: Environmental Compliance ══════════ --}}
+  <section class="wwp-block">
+    <h3>5. Environmental Compliance</h3>
+
+    <div class="wwp-grid">
+      <div class="wwp-field">
+        <label class="wwp-lbl">Effluent Test Results Available?</label>
+        <div class="wwp-yn">
+          <label><input type="radio" name="ww[effluent_test_available]" value="1" @checked($old('effluent_test_available') === '1' || $old('effluent_test_available') === true)> Yes</label>
+          <label><input type="radio" name="ww[effluent_test_available]" value="0" @checked($old('effluent_test_available') === '0' || $old('effluent_test_available') === false)> No</label>
+        </div>
+        <div class="wwp-note">If Yes, complete the two fields below.</div>
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Latest Test Date</label>
+        <input type="date" class="wwp-in" name="ww[effluent_test_date]" max="{{ date('Y-m-d') }}"
+               value="{{ $old('effluent_test_date') ? \Carbon\Carbon::parse($old('effluent_test_date'))->format('Y-m-d') : '' }}">
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Laboratory Name</label>
+        <input type="text" class="wwp-in" name="ww[laboratory_name]" maxlength="255"
+               value="{{ $old('laboratory_name') }}">
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Effluent Test Results Valid?</label>
+        <div class="wwp-yn">
+          <label><input type="radio" name="ww[effluent_test_valid]" value="1" @checked($old('effluent_test_valid') === '1' || $old('effluent_test_valid') === true)> Yes</label>
+          <label><input type="radio" name="ww[effluent_test_valid]" value="0" @checked($old('effluent_test_valid') === '0' || $old('effluent_test_valid') === false)> No</label>
+        </div>
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Effluent Meets Standards?</label>
+        <select class="wwp-in" name="ww[effluent_meets_standards]">
+          <option value="">&mdash; Select &mdash;</option>
+          @foreach(WW::EFFLUENT_STANDARDS as $k => $label)
+            <option value="{{ $k }}" @selected($old('effluent_meets_standards') === $k)>{{ $label }}</option>
+          @endforeach
+        </select>
+      </div>
+
+      <div class="wwp-field wwp-wide">
+        <label class="wwp-lbl">Final Discharge Point</label>
+        <select class="wwp-in" name="ww[final_discharge_point]" id="final_discharge_point"
+                data-toggle-other="final_discharge_point_other">
+          <option value="">&mdash; Select &mdash;</option>
+          @foreach(WW::DISCHARGE_POINTS as $k => $label)
+            <option value="{{ $k }}" @selected($old('final_discharge_point') === $k)>{{ $label }}</option>
+          @endforeach
+        </select>
+        <input type="text" class="wwp-in" name="ww[final_discharge_point_other]" id="final_discharge_point_other"
+               placeholder="If Other, specify" maxlength="120"
+               value="{{ $old('final_discharge_point_other') }}"
+               style="{{ $old('final_discharge_point') === 'other' ? '' : 'display:none' }};margin-top:8px">
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Evidence of Untreated Discharge?</label>
+        <div class="wwp-yn">
+          <label><input type="radio" name="ww[untreated_discharge_evidence]" value="1" @checked($old('untreated_discharge_evidence') === '1' || $old('untreated_discharge_evidence') === true)> Yes</label>
+          <label><input type="radio" name="ww[untreated_discharge_evidence]" value="0" @checked($old('untreated_discharge_evidence') === '0' || $old('untreated_discharge_evidence') === false)> No</label>
+        </div>
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Evidence of Pollution?</label>
+        <div class="wwp-yn">
+          <label><input type="radio" name="ww[pollution_evidence]" value="1" @checked($old('pollution_evidence') === '1' || $old('pollution_evidence') === true)> Yes</label>
+          <label><input type="radio" name="ww[pollution_evidence]" value="0" @checked($old('pollution_evidence') === '0' || $old('pollution_evidence') === false)> No</label>
+        </div>
+      </div>
+
+      <div class="wwp-field wwp-wide">
+        <label class="wwp-lbl">Type of Pollution (select all that apply)</label>
+        <div class="wwp-checks">
+          @php $pollutionVals = (array) old('ww.pollution_types', $ww->pollution_types ?? []); @endphp
+          @foreach(WW::POLLUTION_TYPES as $k => $label)
+            <label class="wwp-check">
+              <input type="checkbox" name="ww[pollution_types][]" value="{{ $k }}"
+                     @checked(in_array($k, $pollutionVals, true))>
+              {{ $label }}
+            </label>
+          @endforeach
+        </div>
+      </div>
+
+      <div class="wwp-field wwp-wide">
+        <label class="wwp-lbl">Key Findings</label>
+        <textarea class="wwp-in" name="ww[key_findings]" rows="3">{{ $old('key_findings') }}</textarea>
+      </div>
+
+      <div class="wwp-field wwp-wide">
+        <label class="wwp-lbl">Environmental Risks Identified</label>
+        <textarea class="wwp-in" name="ww[environmental_risks]" rows="3">{{ $old('environmental_risks') }}</textarea>
+      </div>
+    </div>
+  </section>
+
+  {{-- ══════════ Section 6: Inspection Findings ══════════ --}}
+  <section class="wwp-block">
+    <h3>6. Inspection Findings</h3>
+    <div class="wwp-desc">Observed non-compliances &mdash; select all that apply.</div>
+
+    @php $ncVals = (array) old('ww.non_compliances', $ww->non_compliances ?? []); @endphp
+    <div class="wwp-checks">
+      @foreach(WW::NON_COMPLIANCES as $k => $label)
+        <label class="wwp-check">
+          <input type="checkbox" name="ww[non_compliances][]" value="{{ $k }}"
+                 @if($k === 'other') data-toggle-other-check="non_compliances_other" @endif
+                 @checked(in_array($k, $ncVals, true))>
+          {{ $label }}
+        </label>
+      @endforeach
+    </div>
+    <input type="text" class="wwp-in" name="ww[non_compliances_other]" id="non_compliances_other"
+           placeholder="If Other, specify" maxlength="255"
+           value="{{ $old('non_compliances_other') }}"
+           style="{{ in_array('other', $ncVals, true) ? '' : 'display:none' }};margin-top:8px;max-width:400px">
+  </section>
+
+  {{-- ══════════ Section 7: General Notes ══════════ --}}
+  <section class="wwp-block">
+    <h3>7. Observations &amp; Recommendations</h3>
+    <div class="wwp-desc">
+      Written here, once &mdash; these carry into the generated report and
+      any enforcement letter, the same as every other inspection.
+    </div>
+
+    <div class="wwp-grid">
+      <div class="wwp-field wwp-wide">
+        <label class="wwp-lbl">Observations</label>
+        <textarea class="wwp-in" name="observations" rows="4">{{ old('observations', $inspection->observations ?? '') }}</textarea>
+      </div>
+
+      <div class="wwp-field wwp-wide">
+        <label class="wwp-lbl">Recommendations</label>
+        <textarea class="wwp-in" name="recommendations" rows="4">{{ old('recommendations', $inspection->recommendations ?? '') }}</textarea>
+      </div>
+    </div>
+  </section>
+
+  {{-- ══════════ Section 8: Enforcement Actions ══════════ --}}
+  <section class="wwp-block wwp-final">
+    <h3>8. Enforcement Actions</h3>
+    <div class="wwp-desc">The judgement, made from everything recorded above.</div>
+
+    <div class="wwp-grid">
+      <div class="wwp-field wwp-wide">
+        <label class="wwp-lbl">Compliance Status</label>
+        <div class="wwp-compliance">
+          @foreach(WW::COMPLIANCE_STATUSES as $k => $label)
+            <label class="wwp-compliance-opt wwp-compliance-{{ $k }}">
+              <input type="radio" name="ww[compliance_status]" value="{{ $k }}" required
+                     @checked($old('compliance_status') === $k)>
+              {{ $label }}
+            </label>
+          @endforeach
+        </div>
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Compliance Deadline</label>
+        <input type="date" class="wwp-in" name="ww[compliance_deadline]"
+               value="{{ $old('compliance_deadline') ? \Carbon\Carbon::parse($old('compliance_deadline'))->format('Y-m-d') : '' }}">
+      </div>
+
+      <div class="wwp-field">
+        <label class="wwp-lbl">Follow-up Inspection Date</label>
+        <input type="date" class="wwp-in" name="ww[followup_inspection_date]"
+               value="{{ $old('followup_inspection_date') ? \Carbon\Carbon::parse($old('followup_inspection_date'))->format('Y-m-d') : '' }}">
+      </div>
+    </div>
+  </section>
+
+  {{-- ══════════ Photographs ══════════ --}}
+  <section class="wwp-block">
+    <h3>Photographs</h3>
+    <div class="wwp-desc">Optional &middot; up to 3</div>
+
+    @if($inspection && $inspection->photos->count())
+      <div class="photo-existing">
+        @foreach($inspection->photos as $p)
+          <div class="ph-thumb">
+            <img src="{{ $p->url() }}" alt="">
+            <label class="ph-del"><input type="checkbox" name="remove_photos[]" value="{{ $p->id }}"> Remove</label>
+          </div>
+        @endforeach
+      </div>
+    @endif
+
+    <div class="photo-drop" id="photo-drop">
+      <div class="pd-actions">
+        <label class="btn btn-primary">
+          Take Photo
+          <input type="file" name="photos[]" accept="image/*" capture="environment" multiple hidden class="photo-input">
+        </label>
+        <label class="btn btn-ghost">
+          Choose Files
+          <input type="file" name="photos[]" accept="image/*" multiple hidden class="photo-input">
+        </label>
+      </div>
+      <div class="pd-note">JPEG or PNG, up to 5 MB each. A maximum of three photographs per inspection.</div>
+      <div class="photo-preview" id="photo-preview"></div>
+    </div>
+  </section>
+
+  {{-- ══════════ Inspection Team ══════════ --}}
+  <section class="wwp-block" id="team-block">
+    <h3>Inspection Team</h3>
+    <div class="wwp-desc">Those who conducted the site visit</div>
+
+    <div class="hint" style="margin-bottom:14px;font-size:12.5px;color:var(--tertiary)">
+      These names and positions appear on the signature block of the report.
+      The inspector recording this inspection is included automatically.
+    </div>
+
+    <div id="team-list">
+      @php
+        $teamRows = old('team', $inspection?->team->map(fn($m) => [
+            'name' => $m->name, 'position' => $m->position, 'institution' => $m->institution,
+        ])->all() ?? [['name' => auth()->user()->name, 'position' => '', 'institution' => 'City of Kigali']]);
+      @endphp
+
+      @foreach($teamRows as $i => $m)
+        <div class="team-row">
+          <input class="fi" name="team[{{ $i }}][name]" placeholder="Full name" value="{{ $m['name'] ?? '' }}">
+          <select class="fi" name="team[{{ $i }}][position]">
+            <option value="">Select position</option>
+            @foreach(config('positions') as $group => $list)
+              <optgroup label="{{ $group }}">
+                @foreach($list as $pos)
+                  <option value="{{ $pos }}" @selected(($m['position'] ?? '') === $pos)>{{ $pos }}</option>
+                @endforeach
+              </optgroup>
+            @endforeach
+          </select>
+          <input class="fi" name="team[{{ $i }}][institution]" placeholder="Institution" value="{{ $m['institution'] ?? 'City of Kigali' }}">
+          <button type="button" class="btn btn-ghost btn-sm team-remove">&times;</button>
+        </div>
+      @endforeach
+    </div>
+
+    <button type="button" id="team-add" class="btn btn-ghost btn-sm" style="margin-top:10px">+ Add team member</button>
+  </section>
+
+  {{-- ══════════ Save bar ══════════ --}}
+  <div class="wwp-savebar">
+    <div class="wwp-savenote">A draft may be saved part-finished and completed later.</div>
+    <div class="wwp-saveactions">
+      <button type="submit" name="action" value="draft" class="btn btn-ghost">Save Draft</button>
+      <button type="submit" name="action" value="complete" class="btn btn-success">Complete Inspection</button>
+    </div>
+  </div>
+</form>
+
+@endsection
+
+@push('styles')
+<style>
+  .wwp-head{margin-bottom:20px}
+  .wwp-crumb{font-family:var(--f-head);font-size:11px;font-weight:600;letter-spacing:.8px;
+             text-transform:uppercase;color:var(--tertiary);margin-bottom:4px}
+  .wwp-head p{font-size:13.5px;color:var(--body-text);margin-top:4px}
+
+  .wwp-errors{background:#FDECEA;border-left:4px solid var(--danger);padding:14px 18px;
+              margin-bottom:18px;font-size:13.5px;color:#8B2A20}
+
+  .wwp-block{background:var(--white);padding:24px 26px;margin-bottom:18px;
+             box-shadow:var(--shadow-sm);border-left:4px solid var(--primary)}
+  .wwp-block.wwp-conditional{border-left-color:#8A6D00}
+  .wwp-block.wwp-final{border-left-color:var(--danger)}
+  .wwp-block h3{font-family:var(--f-head);font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px}
+  .wwp-desc{font-size:12.5px;color:var(--tertiary);margin-bottom:16px}
+  .wwp-subhead{font-family:var(--f-head);font-size:13px;font-weight:600;color:var(--ink);margin:20px 0 10px}
+
+  .wwp-grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .wwp-field.wwp-wide{grid-column:1/-1}
+  @media(max-width:700px){.wwp-field.wwp-wide{grid-column:auto}}
+  .wwp-lbl{display:block;font-family:var(--f-head);font-size:10.5px;font-weight:600;
+           letter-spacing:.8px;text-transform:uppercase;color:var(--tertiary);margin-bottom:6px}
+  .wwp-lbl .req{color:var(--danger)}
+  .wwp-in{width:100%;padding:9px 12px;border:1px solid var(--border);font-family:var(--f-body);
+          font-size:13.5px;background:#fff}
+  .wwp-in:focus{outline:none;border-color:var(--primary)}
+  textarea.wwp-in{resize:vertical}
+  .wwp-note{font-size:11.5px;color:var(--tertiary);margin-top:5px}
+
+  .wwp-upi-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+  .wwp-upi-row .wwp-in{flex:1}
+
+  .wwp-yn{display:flex;gap:16px}
+  .wwp-yn label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--body-text);
+                cursor:pointer;font-weight:400}
+  .wwp-yn input{accent-color:var(--primary);cursor:pointer}
+
+  .wwp-checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px 14px}
+  .wwp-check{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--body-text);
+             cursor:pointer;font-weight:400}
+  .wwp-check input{accent-color:var(--primary);cursor:pointer}
+
+  .wwp-table-wrap{overflow-x:auto}
+  table.wwp-grid-table{width:100%;border-collapse:collapse;font-size:13px}
+  table.wwp-grid-table th,table.wwp-grid-table td{border:1px solid var(--border);padding:8px 10px;text-align:center}
+  table.wwp-grid-table th:first-child,table.wwp-grid-table td:first-child{text-align:left;font-weight:600}
+  .wwp-radio-cell input{accent-color:var(--primary);cursor:pointer;width:16px;height:16px}
+
+  .wwp-compliance{display:flex;flex-wrap:wrap;gap:10px}
+  .wwp-compliance-opt{display:flex;align-items:center;gap:7px;padding:9px 16px;
+                       border:1.5px solid var(--border);font-weight:600;font-size:13px;
+                       cursor:pointer;color:var(--body-text)}
+  .wwp-compliance-opt input{accent-color:currentColor;cursor:pointer}
+  .wwp-compliance-compliant{border-color:var(--success);color:var(--success)}
+  .wwp-compliance-partially_compliant{border-color:var(--warning);color:#8A6D00}
+  .wwp-compliance-non_compliant{border-color:var(--danger);color:var(--danger)}
+
+  .wwp-savebar{position:sticky;bottom:0;background:var(--white);padding:16px 22px;
+               display:flex;justify-content:space-between;align-items:center;gap:16px;
+               flex-wrap:wrap;box-shadow:0 -3px 16px rgba(0,0,0,.08);margin-top:4px}
+  .wwp-savenote{font-size:12.5px;color:var(--body-text);flex:1;min-width:200px}
+  .wwp-saveactions{display:flex;gap:10px}
+
+  .team-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center}
+  @media(max-width:700px){.team-row{grid-template-columns:1fr}}
+  .fi{padding:9px 12px;border:1px solid var(--border);font-family:var(--f-body);font-size:13.5px;width:100%}
+  .fi:focus{outline:none;border-color:var(--primary)}
+
+  .photo-drop{border:2px dashed #D3D8E0;border-radius:10px;padding:22px;text-align:center;background:#FAFBFC}
+  .pd-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .pd-note{font-size:11.5px;color:var(--tertiary);margin-top:10px}
+  .photo-preview,.photo-existing{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;justify-content:center}
+  .ph-thumb{width:110px;text-align:center}
+  .ph-thumb img{width:110px;height:90px;object-fit:cover;border:1px solid var(--border);display:block}
+  .ph-name{font-size:10.5px;color:var(--tertiary);margin-top:4px;word-break:break-word}
+  .ph-del{font-size:11px;color:var(--danger);cursor:pointer;margin-top:3px;display:block}
+</style>
+@endpush
+
+@push('scripts')
+<script>
+/* Section 3 and 4 are mutually exclusive, decided by the system found on
+   site — a septic tank and a treatment plant are different pieces of
+   infrastructure, not two stages of the same one. */
+(function () {
+  var select = document.getElementById('ww_system_type');
+  var sections = document.querySelectorAll('.wwp-conditional');
+  if (!select) return;
+
+  function apply() {
+    var value = select.value;
+    sections.forEach(function (sec) {
+      var show = sec.dataset.showsFor === value;
+      sec.style.display = show ? '' : 'none';
+      /* Disabled as well as hidden — a hidden input still posts, and
+         switching system type after filling one section in would
+         otherwise submit values for infrastructure that was never
+         actually found on site. */
+      sec.querySelectorAll('input, select, textarea').forEach(function (el) {
+        el.disabled = !show;
+      });
+    });
+  }
+
+  select.addEventListener('change', apply);
+  apply();
+})();
+
+/* "Other" free-text fields appear only when Other is actually chosen. */
+(function () {
+  document.querySelectorAll('select[data-toggle-other]').forEach(function (select) {
+    select.addEventListener('change', function () {
+      var target = document.getElementById(select.dataset.toggleOther);
+      if (target) target.style.display = (select.value === 'other') ? '' : 'none';
+    });
+  });
+
+  document.querySelectorAll('[data-toggle-other-check]').forEach(function (input) {
+    input.addEventListener('change', function () {
+      var target = document.getElementById(input.dataset.toggleOtherCheck);
+      if (target) target.style.display = input.checked ? '' : 'none';
+    });
+  });
+})();
+
+/* Own copy of the district/sector/cell cascade — this page does not
+   share inspection/form.blade.php, so it does not share that page's
+   script or its data either. Sourced from the same config either way. */
+(function () {
+  var KIGALI = @json(config('kigali'));
+
+  var dEl = document.getElementById('wwp-district');
+  var sEl = document.getElementById('wwp-sector');
+  var cEl = document.getElementById('wwp-cell');
+  if (!dEl || !sEl || !cEl) return;
+
+  var savedSector = @json(old('sector', $entity->sector ?? ''));
+  var savedCell   = @json(old('cell', $entity->cell ?? ''));
+
+  function fill(select, options, keep, placeholder) {
+    select.innerHTML = '<option value="">' + placeholder + '</option>';
+    options.forEach(function (v) {
+      var o = document.createElement('option');
+      o.value = v; o.textContent = v;
+      if (keep && v === keep) o.selected = true;
+      select.appendChild(o);
+    });
+  }
+
+  function onDistrict(keep) {
+    var sectors = dEl.value && KIGALI[dEl.value] ? Object.keys(KIGALI[dEl.value]) : [];
+    fill(sEl, sectors, keep ? savedSector : '', 'Choose');
+    onSector(keep);
+  }
+
+  function onSector(keep) {
+    var cells = (dEl.value && sEl.value && KIGALI[dEl.value] && KIGALI[dEl.value][sEl.value])
+      ? KIGALI[dEl.value][sEl.value] : [];
+    fill(cEl, cells, keep ? savedCell : '', 'Choose');
+  }
+
+  dEl.addEventListener('change', function () { onDistrict(false); });
+  sEl.addEventListener('change', function () { onSector(false); });
+  onDistrict(true);
+})();
+
+/* Own copy of GPS capture. */
+(function () {
+  var btn = document.getElementById('wwp-gps-capture');
+  var note = document.getElementById('wwp-gps-note');
+  if (!btn) return;
+
+  btn.addEventListener('click', function () {
+    if (!navigator.geolocation) return;
+
+    note.textContent = 'Reading position…';
+
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      var lat = pos.coords.latitude, lng = pos.coords.longitude;
+
+      if (lat < -2.6 || lat > -1.0 || lng < 29.0 || lng > 31.0) {
+        note.textContent = 'That position is outside Kigali — not recorded.';
+        return;
+      }
+
+      document.getElementById('wwp-lat').value = lat.toFixed(7);
+      document.getElementById('wwp-lng').value = lng.toFixed(7);
+      note.textContent = 'Position captured.';
+    }, function () {
+      note.textContent = 'Could not read the position. Type the coordinates if known.';
+    }, { enableHighAccuracy: true, timeout: 12000 });
+  });
+})();
+
+/* Add / remove UPI rows. */
+(function () {
+  var list = document.getElementById('upi-list');
+  var addBtn = document.getElementById('upi-add');
+  if (!list || !addBtn) return;
+
+  addBtn.addEventListener('click', function () {
+    if (list.children.length >= 6) return;
+    var row = document.createElement('div');
+    row.className = 'wwp-upi-row';
+    row.innerHTML = '<input type="text" class="wwp-in" name="upis[]" placeholder="1/02/05/03/4745">' +
+      '<button type="button" class="btn btn-ghost btn-sm wwp-upi-remove">Remove</button>';
+    list.appendChild(row);
+  });
+
+  list.addEventListener('click', function (e) {
+    if (e.target.classList.contains('wwp-upi-remove')) {
+      e.target.closest('.wwp-upi-row').remove();
+    }
+  });
+})();
+
+/* ---------- Team ---------- */
+(function () {
+  var list = document.getElementById('team-list');
+  var posHtml = document.querySelector('#team-list select').innerHTML;
+
+  document.getElementById('team-add').addEventListener('click', function () {
+    var n = list.querySelectorAll('.team-row').length;
+    if (n >= 8) return;
+    var row = document.createElement('div');
+    row.className = 'team-row';
+    row.innerHTML =
+      '<input class="fi" name="team[' + n + '][name]" placeholder="Full name">' +
+      '<select class="fi" name="team[' + n + '][position]">' + posHtml + '</select>' +
+      '<input class="fi" name="team[' + n + '][institution]" placeholder="Institution" value="City of Kigali">' +
+      '<button type="button" class="btn btn-ghost btn-sm team-remove">&times;</button>';
+    list.appendChild(row);
+  });
+
+  list.addEventListener('click', function (e) {
+    if (e.target.classList.contains('team-remove') && list.querySelectorAll('.team-row').length > 1) {
+      e.target.closest('.team-row').remove();
+    }
+  });
+})();
+
+/* ---------- Photos ---------- */
+(function () {
+  const MAX = 3;
+  const preview = document.getElementById('photo-preview');
+  let chosen = [];
+  document.querySelectorAll('.photo-input').forEach(input => {
+    input.addEventListener('change', () => {
+      Array.from(input.files).forEach(f => {
+        if (chosen.length >= MAX) return;
+        chosen.push(f);
+      });
+      render();
+    });
+  });
+  function render() {
+    preview.innerHTML = '';
+    chosen.forEach((f, i) => {
+      const d = document.createElement('div');
+      d.className = 'ph-thumb';
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(f);
+      const cap = document.createElement('div');
+      cap.className = 'ph-name';
+      cap.textContent = f.name;
+      const rm = document.createElement('div');
+      rm.className = 'ph-del';
+      rm.textContent = 'Remove';
+      rm.onclick = () => { chosen.splice(i, 1); render(); sync(); };
+      d.append(img, cap, rm);
+      preview.appendChild(d);
+    });
+    sync();
+  }
+  function sync() {
+    const dt = new DataTransfer();
+    chosen.forEach(f => dt.items.add(f));
+    const first = document.querySelector('.photo-input');
+    first.files = dt.files;
+    document.querySelectorAll('.photo-input').forEach((el, i) => { if (i > 0) el.value = ''; });
+  }
+})();
+
+/* Building Use posts to the shared use_type field as the label text
+   itself, not a short key. "Other" swaps in the free-text box's value
+   instead of the literal word "Other". */
+(function () {
+  var select = document.getElementById('use_type_select');
+  var hidden = document.getElementById('use_type_hidden');
+  var other  = document.getElementById('use_type_other');
+  if (!select || !hidden || !other) return;
+
+  var known = Array.from(select.options).some(function (o) { return o.value === hidden.value; });
+  if (hidden.value && !known) {
+    select.value = '';
+    other.style.display = '';
+  }
+
+  function sync2() {
+    if (select.value === 'Other') {
+      other.style.display = '';
+      hidden.value = other.value;
+    } else {
+      other.style.display = 'none';
+      hidden.value = select.value;
+    }
+  }
+
+  select.addEventListener('change', sync2);
+  other.addEventListener('input', function () { hidden.value = other.value; });
+})();
+</script>
+@endpush

@@ -1,0 +1,110 @@
+@extends('layouts.app')
+@section('title', 'Add File')
+
+@section('content')
+
+<div class="page-head">
+  <div>
+    <div class="crumb">{{ $type['group'] }} &middot; {{ $type['name'] }}</div>
+    <h2>Add File</h2>
+    <p>Start a new inspection, or open a follow-up on a premises already on record.</p>
+  </div>
+  <div class="head-actions">
+    <a href="{{ route('type.show', $type['code']) }}" class="btn btn-ghost">Back</a>
+  </div>
+</div>
+
+<div class="split" style="grid-template-columns:1fr 1fr">
+  <div class="choice">
+    <div class="ch-icon new">N</div>
+    <h4>New Inspection</h4>
+    <p>The premises has not been inspected before, or this is an unrelated visit. A blank checklist is opened and a new record created.</p>
+    {{-- The stage is chosen on the checklist now, under Status of the
+         works, so this offers one way in like every other category. --}}
+    <a href="{{ route('inspection.create', $type['code']) }}"
+       class="btn btn-success"
+       style="width:100%;justify-content:center;">
+        Start New Inspection
+    </a>
+  </div>
+
+  <div class="choice">
+    <div class="ch-icon follow">F</div>
+    <h4>Follow-up Inspection</h4>
+    <p>The premises has been inspected before. The previous checklist is loaded so you
+       can record what has been corrected and what remains outstanding.</p>
+    <a href="#existing" class="btn btn-primary" style="width:100%;justify-content:center">Choose a Premises</a>
+  </div>
+</div>
+
+<section id="existing">
+  <h3>Premises on record</h3>
+  <div class="desc">Search by name, UPI, owner, telephone or email. Selecting one opens its
+    most recent checklist for a follow-up.</div>
+
+  <form method="get" style="display:flex;gap:9px;margin-bottom:16px;flex-wrap:wrap">
+    <input type="text" name="q" value="{{ $search }}" placeholder="Name, UPI, owner, phone or email"
+           style="flex:1;min-width:220px;padding:10px 13px;border:1px solid #D3D8E0;
+                  border-radius:7px;font-size:14px;font-family:inherit">
+    <button type="submit" class="btn btn-primary">Search</button>
+    @if($search)<a href="{{ route('entity.add', $type['code']) }}" class="btn btn-ghost">Clear</a>@endif
+  </form>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>Premises</th><th>UPI</th><th>Owner</th><th>District</th>
+            <th style="text-align:center">Inspections</th><th>Last visit</th><th style="text-align:right"></th></tr>
+      </thead>
+      <tbody>
+        @forelse($existing as $r)
+          <tr>
+            <td><strong>{{ $r->name }}</strong></td>
+            <td style="font-size:12px">{{ $r->upi ?: '—' }}</td>
+            <td>{{ $r->owner ?: '—' }}</td>
+            <td>{{ $r->district ?: '—' }}</td>
+            <td style="text-align:center">
+              <span class="count-chip {{ $r->inspection_count > 1 ? 'multi' : '' }}">{{ $r->inspection_count }}</span>
+            </td>
+            <td style="font-size:12.5px">{{ $r->last_inspection ?? '—' }}</td>
+            <td class="num">
+              <a href="{{ route('entity.show', $r->entity_id) }}" class="btn btn-ghost btn-sm">Open</a>
+            </td>
+          </tr>
+        @empty
+          <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">
+            @if($search) No premises match "{{ $search }}". @else No premises on record yet. @endif
+          </td></tr>
+        @endforelse
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="note">
+  <strong>Checklist capture is being built</strong>
+  Inspection records are currently read from the existing platform. Recording and editing
+  checklists inside the rebuilt platform is the next stage of work, after which the buttons
+  above will open the live form.
+</div>
+
+
+
+@endsection
+
+@push('styles')
+<style>
+  .choice{background:#fff;border:1px solid var(--line);border-radius:10px;padding:24px;
+          box-shadow:var(--sh);display:flex;flex-direction:column}
+  .choice h4{font-size:16px;color:var(--blue);margin-bottom:7px}
+  .choice p{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px;flex:1}
+  .ch-icon{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;
+           justify-content:center;font-weight:800;font-size:16px;margin-bottom:14px}
+  .ch-icon.new{background:#E4F5EA;color:var(--green)}
+  .ch-icon.follow{background:#EDF2FC;color:var(--blue)}
+  .count-chip{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:24px;
+    padding:0 7px;border-radius:12px;background:#EDF2FC;color:var(--blue);
+    font-weight:800;font-size:12px}
+  .count-chip.multi{background:#FFF4D6;color:#8A6D00}
+</style>
+@endpush

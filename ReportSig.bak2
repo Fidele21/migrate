@@ -1,0 +1,232 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Document;
+use App\Models\DocumentSignature;
+use App\Models\DocumentTransition;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * Signing a report, and removing one that should not exist.
+ *
+ * The officers who attended sign first. The Director of Inspection signs
+ * last, and only once every one of them has — certifying findings the
+ * officers have not yet stood behind would make the signature
+ * meaningless.
+ *
+ * The Director's signature seals the report: a hash of its content is
+ * stored, editing stops, and the only remaining actions are download and
+ * transmission. The document transmitted is therefore demonstrably the
+ * document that was signed.
+ */
+class ReportSignatureController extends Controller
+{
+    public const INSPECTOR = 'inspector';
+    public const DIRECTOR  = 'director';
+
+    /* ==============================================================
+       Open for signature
+       ============================================================== */
+    public function open(Document $report)
+    {
+        abort_unless($report->type === 'report', 404);
+
+        $inspection = $report->inspection;
+
+        abort_unless($inspection && $inspection->conductedBy(auth()->user()), 403,
+            'Only an officer who attended may submit this report for signature.');
+
+        abort_if($report->sealed_at, 422, 'This report has already been sealed.');
+
+        abort_if($inspection->status !== 'completed', 422,
+            'Complete the inspection before submitting its report.');
+
+        $report->forceFill([
+            'signature_stage'      => 'pending_signatures',
+            'signatures_opened_at' => now(),
+        ])->save();
+
+        $this->note($report, 'opened_for_signature',
+            'Report opened for signature by the inspection team.');
+
+        return back()->with('status',
+            'The report is open for signature. Each officer who attended must sign, then the Director.');
+    }
+
+    /* ==============================================================
+       Sign
+       ============================================================== */
+    public function sign(Request $request, Document $report)
+    {
+        abort_unless($report->type === 'report', 404);
+        abort_if($report->sealed_at, 422, 'This report has already been sealed.');
+
+        abort_unless($report->signature_stage === 'pending_signatures', 422,
+            'This report has not been opened for signature.');
+
+        $user  = auth()->user();
+        $stage = $this->stageFor($report, $user);
+
+        abort_unless($stage, 403, 'You are not among those who must sign this report.');
+
+        abort_if($report->signatures()->where('signer_id', $user->id)->exists(), 422,
+            'You have already signed this report.');
+
+        if ($stage === self::DIRECTOR) {
+            $outstanding = $this->outstandingOfficers($report);
+
+            abort_if($outstanding->isNotEmpty(), 422,
+                'The Director signs last. Still to sign: ' . $outstanding->implode(', ') . '.');
+        }
+
+        abort_unless($user->signature_path, 422,
+            'Register your signature under My Account before signing.');
+
+        $validated = $request->validate([
+            'remark' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        DB::transaction(function () use ($report, $user, $stage, $validated, $request) {
+            DocumentSignature::create([
+                'document_id'      => $report->id,
+                'signer_id'        => $user->id,
+                'signer_role'      => $user->position
+                                        ?: $user->roles->pluck('name')->first(),
+                'signer_name'      => $user->name,
+                'stage'            => $stage,
+                'remark'           => $validated['remark'] ?? null,
+                'content_hash'     => $report->computeHash(),
+                'signature_method' => 'registered',
+                'signature_path'   => $user->signature_path,
+                'ip_address'       => $request->ip(),
+                'signed_at'        => now(),
+            ]);
+
+            $this->note($report, 'signed',
+                ucfirst($stage) . ' signature by ' . $user->name . '.');
+
+            /* The Director's signature closes the report. */
+            if ($stage === self::DIRECTOR) {
+                $report->forceFill([
+                    'signature_stage' => 'signed',
+                    'status'          => Document::APPROVED,
+                    'sealed_at'       => now(),
+                    'sealed_hash'     => $report->computeHash(),
+                    'approved_at'     => now(),
+                    'approved_by'     => $user->id,
+                ])->save();
+
+                $this->note($report, 'sealed',
+                    'Report sealed. Content fixed; download and transmission only.');
+            }
+        });
+
+        return back()->with('status', $stage === self::DIRECTOR
+            ? 'Report signed and sealed. It can be downloaded and transmitted, but not altered.'
+            : 'Your signature has been recorded.');
+    }
+
+    /* ==============================================================
+       Delete a report that should not exist
+       ============================================================== */
+    public function destroy(Request $request, Document $report)
+    {
+        abort_unless($report->type === 'report', 404);
+
+        abort_if($report->sealed_at, 422,
+            'A sealed report cannot be deleted. It is part of the record.');
+
+        abort_if($report->signatures()->exists(), 422,
+            'This report already carries a signature. Ask the Chief Inspector if it must be withdrawn.');
+
+        $user       = auth()->user();
+        $inspection = $report->inspection;
+
+        $mayDelete = $report->created_by === $user->id
+            || ($inspection && $inspection->conductedBy($user))
+            || $user->can('document.approve');
+
+        abort_unless($mayDelete, 403,
+            'Only an officer who attended, or the Chief Inspector, may delete this report.');
+
+        $request->validate([
+            'confirm' => ['required', 'in:DELETE'],
+            'reason'  => ['required', 'string', 'min:5', 'max:300'],
+        ], [
+            'confirm.in' => 'Type DELETE to confirm.',
+            'reason.min' => 'Give a short reason, so the deletion is accounted for.',
+        ]);
+
+        $title = $report->title;
+
+        /* The transition is written before the document goes, so the
+           record shows something was created and removed rather than
+           silently leaving a gap. */
+        $this->note($report, 'deleted',
+            'Report deleted by ' . $user->name . '. Reason: ' . $request->input('reason'));
+
+        DB::transaction(function () use ($report) {
+            if (method_exists($report, 'assets')) {
+                $report->assets()->delete();
+            }
+            $report->forceDelete();
+        });
+
+        return redirect()
+            ->route('inspection.show', $inspection?->id ?? 0)
+            ->with('status', 'Deleted: ' . $title);
+    }
+
+    /* ==============================================================
+       Helpers
+       ============================================================== */
+
+    /** Which signature, if any, this person owes on this report. */
+    private function stageFor(Document $report, User $user): ?string
+    {
+        if ($report->inspection?->conductedBy($user)) {
+            return self::INSPECTOR;
+        }
+
+        if ($user->can('document.verify.district')
+            && $user->coversDistrict($report->district_id)) {
+            return self::DIRECTOR;
+        }
+
+        return null;
+    }
+
+    /** Names of officers on the team who have not yet signed. */
+    private function outstandingOfficers(Document $report)
+    {
+        $inspection = $report->inspection;
+
+        if (! $inspection) {
+            return collect();
+        }
+
+        $signed = $report->signatures()
+            ->where('stage', self::INSPECTOR)
+            ->pluck('signer_id');
+
+        return $inspection->team()
+            ->whereNotNull('user_id')
+            ->whereNotIn('user_id', $signed)
+            ->pluck('name');
+    }
+
+    private function note(Document $report, string $action, string $detail): void
+    {
+        DocumentTransition::create([
+            'document_id' => $report->id,
+            'user_id'     => auth()->id(),
+            'from_status' => $report->getOriginal('status'),
+            'to_status'   => $report->status,
+            'action'      => $action,
+            'note'        => $detail,
+        ]);
+    }
+}

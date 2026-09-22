@@ -1,0 +1,136 @@
+{{--
+  The two upper side panels.
+
+  Which pair a category shows is declared in
+  config/inspection_types.panels, because what is worth comparing differs:
+  a petrol station's siting cannot be corrected by housekeeping, while an
+  occupied building's shortcomings nearly all can.
+
+  Expects: $panel ('siting'|'operations'|'districts'|'ranking'),
+           $type, $gap, $byArea, $areaLevel, $records, $filters, $q
+--}}
+
+@php $area = 'area-' . ($slot ?? 'siting'); @endphp
+
+@if($panel === 'siting' || $panel === 'operations')
+
+  @php
+    $isSiting = $panel === 'siting';
+    $value    = $isSiting ? ($gap['siting'] ?? 0) : ($gap['operations'] ?? 0);
+  @endphp
+
+  <section class="panel {{ $area }}">
+    <div class="p-head compact">
+      <h3>{{ $isSiting ? 'Siting & Design' : 'Operations & Equipment' }}</h3>
+      <a href="{{ route('analysis.group', array_merge(
+            ['code' => $type['code'], 'group' => $panel], $q)) }}"
+         class="icon-btn" title="Detail">&rsaquo;</a>
+    </div>
+    <div class="gauge">
+      <canvas id="{{ $isSiting ? 'cSiting' : 'cOps' }}"></canvas>
+      <div class="gauge-centre"><b>{{ $value }}<i>%</i></b></div>
+    </div>
+    
+  </section>
+
+@elseif($panel === 'districts')
+
+  <section class="panel {{ $area }}" id="area-panel">
+    <div class="p-head compact">
+      <div>
+        <h3>{{ $areaLevel === 'sector' ? 'Sectors' : 'Districts' }}</h3>
+        <div class="p-desc">
+          {{ $areaLevel === 'sector'
+              ? 'Within ' . ($filters['district'] ?: '—')
+              : 'Premises inspected and compliance rate' }}
+        </div>
+      </div>
+      <div class="p-tools">
+        @if($areaLevel === 'sector')
+          <a href="{{ route('type.show', array_merge(['code' => $type['code']],
+                collect($q)->except(['district','sector','cell'])->all())) }}"
+             class="icon-btn" title="Back to districts">&times;</a>
+        @endif
+        <button type="button" class="icon-btn" id="area-full" title="Full screen">&#10530;</button>
+        <a href="{{ route('register.index', array_merge(['code' => $type['code']], $q)) }}"
+           class="icon-btn" title="Detail">&rsaquo;</a>
+      </div>
+    </div>
+
+    @if(count($byArea))
+      @php
+        /* Built here rather than inline: a multi-line expression inside
+           @json() is more than Blade's parser will take. */
+        $areaData = collect($byArea)->map(fn ($a) => [
+            'name'  => $a->name,
+            'n'     => (int) $a->premises,
+            'pct'   => (float) $a->compliance,
+        ])->values();
+      @endphp
+
+      <div class="area-wrap" id="area-wrap">
+        <canvas id="cArea"></canvas>
+      </div>
+
+      <div class="area-legend">
+        <span><i class="lg-bar"></i>Premises inspected</span>
+        <span><i class="lg-line"></i>Compliance rate</span>
+      </div>
+
+      <script type="application/json" id="area-data">{!! $areaData->toJson() !!}</script>
+      <script type="application/json" id="area-level">{!! json_encode($areaLevel) !!}</script>
+    @else
+      <div class="p-empty">Nothing recorded in this selection.</div>
+    @endif
+  </section>
+
+@elseif($panel === 'ranking')
+
+  <section class="panel {{ $area }}" id="rank-panel">
+    <div class="p-head compact">
+      <div>
+        <h3>Premises ranked</h3>
+        <div class="p-desc">Weakest first &mdash; {{ $recordCount }} in scope</div>
+      </div>
+      <div class="p-tools">
+        <button type="button" class="icon-btn" id="rank-left" title="Earlier">&#8249;</button>
+        <button type="button" class="icon-btn" id="rank-right" title="Later">&#8250;</button>
+        <button type="button" class="icon-btn" id="rank-full" title="Full screen">&#10530;</button>
+        <a href="{{ route('register.index', array_merge(['code' => $type['code']], $q)) }}"
+           class="icon-btn" title="Detail">&rsaquo;</a>
+      </div>
+    </div>
+
+    @if($records->count())
+      <div class="rank-scroll" id="rank-scroll">
+        <div class="rank-canvas" id="rank-canvas">
+          <canvas id="cRank"></canvas>
+        </div>
+      </div>
+
+      <div class="rank-legend">
+        <span><i style="background:#B71C1C"></i>Closure</span>
+        <span><i style="background:#E74C3C"></i>Temporary</span>
+        <span><i style="background:#F39C12"></i>Improve</span>
+        <span><i style="background:#4CAF50"></i>Compliant</span>
+        <span><i style="background:#EEF1F5"></i>Shortfall</span>
+      </div>
+
+      @php
+        /* Built here rather than inline: a multi-line expression inside
+           @json() is more than Blade's parser will take. */
+        $rankData = $records->map(fn ($r) => [
+            'id'    => $r->inspection_id ?? $r->id,
+            'name'  => $r->name,
+            'pct'   => round((float) $r->compliance, 1),
+            'where' => collect([$r->district ?? null, $r->sector ?? null])->filter()->implode(' · '),
+        ])->values();
+      @endphp
+
+      <script type="application/json" id="rank-data">{!! $rankData->toJson() !!}</script>
+    @else
+      <div class="p-empty">Nothing recorded in this selection.</div>
+    @endif
+  </section>
+
+@endif

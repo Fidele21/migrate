@@ -1,0 +1,146 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Document;
+use App\Models\User;
+use PhpOffice\PhpWord\Settings;
+use PhpOffice\PhpWord\TemplateProcessor;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
+/**
+ * Filling the City's own letter template.
+ *
+ * The approved .docx is the format. Rather than recreate it, the platform
+ * opens it and substitutes the placeholders — so the letterhead images,
+ * the footer, the page geometry and the Kinyarwanda wording remain exactly
+ * as the unit approved them, and a change to the template is made in Word
+ * rather than in code.
+ */
+class LetterTemplateController extends Controller
+{
+    private const TEMPLATE = 'templates/letter_no_fine.docx';
+
+    public function download(Document $letter): StreamedResponse
+    {
+        abort_unless($letter->type === 'letter', 404);
+
+        $path = storage_path('app/' . self::TEMPLATE);
+
+        abort_unless(is_file($path), 500,
+            'The letter template is missing. It should be at storage/app/' . self::TEMPLATE);
+
+        /* Ampersands in a premises name broke generation before now.
+           Escaping is enabled so "Kitchen & Bar" cannot corrupt the file. */
+        Settings::setOutputEscapingEnabled(true);
+
+        $t = new TemplateProcessor($path);
+
+        $inspection = $letter->inspection;
+        $entity     = $inspection?->entity;
+        $cfg        = config('letters');
+
+        /* ---- Reference and dates ---- */
+        $t->setValue('ref',   $letter->reference_number ?: str_repeat('.', 20));
+        $t->setValue('year',  ($letter->issued_at ?? $letter->created_at ?? now())->format('y'));
+        $t->setValue('date',  $letter->issued_at?->format('d/m/Y') ?: str_repeat('.', 14));
+
+        /* ---- Addressee ---- */
+        $t->setValue('owner', $entity->owner ?: '…………');
+        $t->setValue('tel',   $entity->telephone ?: '…………');
+
+        /* ---- Subject ---- */
+        $t->setValue('subject',
+            $letter->subject ?: 'Kubagezaho ubugenzuzi bwakorewe inyubako yanyu');
+
+        /* ---- The inspection this letter arises from ---- */
+        $t->setValue('insp_date', $inspection?->inspection_date?->format('d/m/Y') ?: '../.../202.');
+        $t->setValue('premises',  $entity->name ?: '—');
+        $t->setValue('sector',    $entity->sector ?: '—');
+        $t->setValue('upi',       $entity->upi ?: '—');
+        $t->setValue('district',  $entity->district ?: '……...');
+
+        /* ---- Prior correspondence ---- */
+        $t->setValue('prior_ref',  $letter->prior_reference ?: '—');
+        $t->setValue('prior_date', $letter->prior_date?->format('d/m/Y') ?: '—');
+        $t->setValue('reply_date', $letter->reply_date?->format('d/m/Y') ?: '—');
+
+        /* ---- The deadline ---- */
+        $t->setValue('deadline',
+            (string) ($letter->deadline_days ?: data_get($cfg, 'default_deadline_days', 30)));
+
+        /* ---- Who signs ---- */
+        $signature = $letter->signatures->firstWhere('stage', 'director')
+                  ?? $letter->signatures->last();
+
+        $t->setValue('signatory',
+            $signature->signer_name ?? data_get($cfg, 'signatory.title', 'Chief Inspector'));
+        $t->setValue('signatory_title',
+            $signature->signer_role ?? 'Chief Inspector');
+
+        /* ---- The annexe ---- */
+        $this->fillAnnex($t, $inspection);
+
+        $name = 'Ibaruwa-' . str($entity->name ?? 'letter')->slug() . '-'
+              . ($letter->reference_number ?: $letter->id) . '.docx';
+
+        return response()->streamDownload(function () use ($t) {
+            echo file_get_contents($t->save());
+        }, $name, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ]);
+    }
+
+    /**
+     * The annexe: what the premises must put right.
+     *
+     * A prohibition item — a kitchen at a petrol station — is failed by
+     * answering yes, so the test is inverted. Listing it the usual way
+     * would omit the very thing the letter is about.
+     */
+    private function fillAnnex(TemplateProcessor $t, $inspection): void
+    {
+        $rows = [];
+
+        if ($inspection && $inspection->template) {
+            $answers = $inspection->answers->keyBy('item_id');
+
+            foreach ($inspection->template->sections as $section) {
+                foreach ($section->items as $item) {
+                    $a = $answers->get($item->id);
+                    if (! $a || ! in_array($a->status, ['yes', 'no'], true)) continue;
+
+                    $complied = $item->is_prohibition
+                        ? $a->status === 'no'
+                        : $a->status === 'yes';
+
+                    if ($complied) continue;
+
+                    $text = rtrim($item->label, '. ');
+
+                    if ($item->is_prohibition) {
+                        $text .= ' — ntibyemewe muri sitasiyo ya lisansi';
+                    }
+
+                    if ($a->comment) {
+                        $text .= ' (' . $a->comment . ')';
+                    }
+
+                    $rows[] = $text;
+                }
+            }
+        }
+
+        if (empty($rows)) {
+            $t->cloneBlock('annex_rows', 0, true, false);
+            return;
+        }
+
+        $t->cloneRow('item', count($rows));
+
+        foreach ($rows as $i => $text) {
+            $t->setValue('n#' . ($i + 1), (string) ($i + 1));
+            $t->setValue('item#' . ($i + 1), $text);
+        }
+    }
+}

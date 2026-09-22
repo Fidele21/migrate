@@ -1,0 +1,173 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Document;
+use App\Models\Inspection;
+use PhpOffice\PhpWord\Settings;
+use PhpOffice\PhpWord\TemplateProcessor;
+
+/**
+ * Filling the City's own letter template.
+ *
+ * The approved .docx is the format. Rather than recreate it, the platform
+ * opens it and substitutes the markers — so the letterhead, the footer,
+ * the page setup and the Kinyarwanda wording remain exactly as the unit
+ * approved them, and a change to the letter is made in Word rather than
+ * in code.
+ *
+ * fields() is the single source of truth for what a letter says. Both
+ * this controller's Word export and every on-screen view of the letter
+ * (review, show) call this one method rather than each computing their
+ * own version — that is how the review screen and the download used to
+ * silently disagree, when one read a frozen, separately-saved copy of
+ * the letter and the other rebuilt it live. There is now only one place
+ * that decides the content, so the two cannot drift apart again.
+ */
+class LetterTemplateController extends Controller
+{
+    private const TEMPLATE = 'templates/letter_no_fine.docx';
+
+    public function download(Document $letter)
+    {
+        abort_unless($letter->type === 'letter', 404);
+
+        $path = storage_path('app/' . self::TEMPLATE);
+
+        abort_unless(is_file($path), 500,
+            'The letter template is missing. It should be at storage/app/' . self::TEMPLATE);
+
+        /* Escaping is handled per value below. Blanket escaping would
+           destroy the line-break markup the recommendations carry. */
+        Settings::setOutputEscapingEnabled(false);
+
+        $t = new TemplateProcessor($path);
+
+        /* Every value is escaped as it goes in. An ampersand in a
+           premises name — "Kitchen & Bar" — corrupted the file before. */
+        $set = fn (string $k, ?string $v) => $t->setValue(
+            $k, htmlspecialchars((string) $v, ENT_QUOTES | ENT_XML1, 'UTF-8')
+        );
+
+        $fields = static::fields($letter);
+
+        foreach ($fields as $key => $value) {
+            if ($key === 'recommendations') {
+                continue; // handled by fillAnnex(), which needs raw line breaks
+            }
+            $set($key, (string) $value);
+        }
+
+        /* ---- The annexe ---- */
+        $this->fillAnnex($t, $fields['recommendations']);
+
+        $entity = $letter->inspection?->entity;
+
+        $name = 'Ibaruwa-'
+              . preg_replace('/[^A-Za-z0-9]+/', '-', $entity?->name ?: 'letter')
+              . '-' . ($letter->reference_number ?: $letter->id) . '.docx';
+
+        /* Written to a file and sent, rather than echoed. Echoing picks
+           up anything already in the output buffer, and a single stray
+           byte corrupts the archive. */
+        $tmp = storage_path('app/' . uniqid('letter_', true) . '.docx');
+        $t->saveAs($tmp);
+
+        return response()->download($tmp, $name, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ])->deleteFileAfterSend(true);
+    }
+
+    /**
+     * The letter's live content, computed once, used everywhere the
+     * letter is shown or exported.
+     *
+     * This is the single source of truth for what the letter says. The
+     * Word export fills the .docx template with these values; every
+     * on-screen preview renders the same values as HTML. Neither may
+     * compute its own version — that is how the review screen and the
+     * download drifted apart before, when a frozen saved copy of the
+     * letter (content_html) silently stopped matching what this method
+     * would produce.
+     *
+     * Called fresh on every request, so it always reflects the current
+     * state of the inspection, entity and signatures — never stale.
+     */
+    public static function fields(Document $letter): array
+    {
+        $inspection = $letter->inspection;
+        $entity     = $inspection?->entity;
+        $cfg        = config('letters');
+
+        $signature = $letter->signatures->firstWhere('stage', 'director')
+                  ?? $letter->signatures->last();
+
+        return [
+            'ref'       => $letter->reference_number ?: str_repeat('.', 20),
+            'year'      => ($letter->issued_at ?? $letter->created_at ?? now())->format('y'),
+            'date'      => $letter->issued_at?->format('d/m/Y') ?: str_repeat('.', 14),
+
+            'owner'     => $entity?->owner ?: '…………',
+            'tel'       => $entity?->telephone ?: '…………',
+
+            'subject'   => $letter->subject ?: 'Kubagezaho ubugenzuzi bwakorewe inyubako yanyu',
+
+            'insp_date' => $inspection?->inspection_date?->format('d/m/Y') ?: '../.../202.',
+            'premises'  => $entity?->name ?: '—',
+            'sector'    => $entity?->sector ?: '……...',
+            'upi'       => $entity?->upi ?: '—',
+            'district'  => $entity?->district ?: '……...',
+
+            'deadline'  => (string) ($letter->deadline_days
+                ?: data_get($cfg, 'default_deadline_days', 30)),
+
+            'signatory' => $signature->signer_name
+                ?? data_get($cfg, 'signatory.title', 'Chief Inspector'),
+
+            /* One line per requirement. Kept as an array here — the
+               .docx annexe needs raw <w:br/> markup between lines, while
+               an HTML view can loop them as <li> — so each consumer
+               formats these lines its own way rather than this method
+               guessing which markup the caller wants. */
+            'recommendations' => static::recommendationLines($inspection),
+        ];
+    }
+
+    /**
+     * The inspector's own recommendations, written during the visit, one
+     * per line.
+     *
+     * Not the list of failed checklist items — that is the report's
+     * business. The letter says what to put right, in the officer's
+     * words. Where nothing was written, says so rather than leaving the
+     * annexe blank.
+     */
+    private static function recommendationLines(?Inspection $inspection): array
+    {
+        $text = trim((string) $inspection?->recommendations);
+
+        if ($text === '') {
+            return ['Nta byifuzo byanditswe muri ubu bugenzuzi.'];
+        }
+
+        $lines = preg_split('/\r\n|\r|\n/', $text);
+
+        return array_values(array_filter(array_map('trim', $lines), fn ($l) => $l !== ''));
+    }
+
+    /**
+     * Write the recommendation lines into the .docx annexe.
+     *
+     * Each line becomes its own paragraph in Word. Without the break
+     * markup the recommendations would run together as one block.
+     */
+    private function fillAnnex(TemplateProcessor $t, array $lines): void
+    {
+        $escaped = array_map(
+            fn ($l) => htmlspecialchars($l, ENT_QUOTES | ENT_XML1, 'UTF-8'),
+            $lines
+        );
+
+        $t->setValue('recommendations', implode('</w:t><w:br/><w:t>', $escaped));
+    }
+}

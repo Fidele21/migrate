@@ -1,0 +1,823 @@
+{{-- 
+  Starting an inspection.
+
+  One entry point rather than a button per category.
+
+  Construction inspections require a stage:
+    - substructure
+    - superstructure
+
+  The construction stage is selected here before opening the
+  premises/inspection workflow. The backend still validates the
+  stage in InspectionController.
+--}}
+
+@can('inspection.create')
+
+@php
+    $groups = config('inspection_types.groups', []);
+
+    $ready = collect($groups)
+        ->flatMap(fn ($g) => collect($g['types'] ?? []))
+        ->filter(fn ($t) => !empty($t['live']))
+        ->count();
+@endphp
+
+
+{{-- ==============================================================
+     MAIN INSPECT BUTTON
+     ============================================================== --}}
+
+<button type="button"
+        class="btn btn-success"
+        id="inspect-btn">
+    Inspect
+</button>
+
+
+{{-- ==============================================================
+     INSPECTION CATEGORY MODAL
+     ============================================================== --}}
+
+<div class="ins-veil"
+     id="inspect-veil"
+     role="dialog"
+     aria-modal="true"
+     aria-label="Choose an inspection">
+
+    <div class="ins-box">
+
+        {{-- ------------------------------------------------------
+             HEADER
+             ------------------------------------------------------ --}}
+
+        <div class="ins-head">
+
+            <div>
+
+                <h3>What are you inspecting?</h3>
+
+                <div class="ins-sub">
+                    {{ $ready }}
+                    {{ Str::plural('category', $ready) }}
+                    ready.
+                    Choose one to open a premises file.
+                </div>
+
+            </div>
+
+            <button type="button"
+                    class="ins-x"
+                    id="inspect-close"
+                    aria-label="Close">
+                &times;
+            </button>
+
+        </div>
+
+
+        {{-- ------------------------------------------------------
+             CATEGORY LIST
+             ------------------------------------------------------ --}}
+
+        <div class="ins-body"
+             id="inspection-category-body">
+
+            @foreach($groups as $key => $group)
+
+                <div class="ins-group">
+                    {{ $group['label'] }}
+                </div>
+
+
+                <div class="ins-grid">
+
+                    @foreach(($group['types'] ?? []) as $code => $t)
+
+                        @if(!empty($t['live']))
+
+                            {{-- ==================================================
+                                 CONSTRUCTION
+                                 ================================================== --}}
+
+                            @if($code === 'construction')
+
+                                {{-- Straight to Add File, like every other
+                                     category: new or follow-up and the stage
+                                     are all chosen on one page. --}}
+                                <a href="{{ route('entity.add', $code) }}"
+                                   class="ins-card construction-card">
+
+                                    <b>
+                                        {{ $t['name'] }}
+                                    </b>
+
+                                    <span>
+                                        {{ Str::limit($t['blurb'] ?? '', 70) }}
+                                    </span>
+
+                                </a>
+
+
+                            {{-- ==================================================
+                                 ALL OTHER INSPECTION TYPES
+                                 ================================================== --}}
+
+                            @else
+
+                                <a href="{{ route('entity.add', $code) }}"
+                                   class="ins-card">
+
+                                    <b>
+                                        {{ $t['name'] }}
+                                    </b>
+
+                                    <span>
+                                        {{ Str::limit($t['blurb'] ?? '', 70) }}
+                                    </span>
+
+                                </a>
+
+                            @endif
+
+
+                        @else
+
+                            {{-- ==================================================
+                                 CATEGORY WITHOUT PUBLISHED CHECKLIST
+                                 ================================================== --}}
+
+                            <div class="ins-card off"
+                                 title="No published checklist yet">
+
+                                <b>
+                                    {{ $t['name'] }}
+                                </b>
+
+                                <span>
+                                    Checklist not yet published
+                                </span>
+
+                            </div>
+
+                        @endif
+
+                    @endforeach
+
+                </div>
+
+            @endforeach
+
+        </div>
+
+
+        {{-- ==============================================================
+             CONSTRUCTION STAGE PANEL
+             ============================================================== --}}
+
+        <div class="stage-panel"
+             id="construction-stage-panel">
+
+            {{-- ----------------------------------------------------------
+                 STAGE HEADER
+                 ---------------------------------------------------------- --}}
+
+            <div class="stage-head">
+
+                <div>
+
+                    <h3>
+                        Construction stage
+                    </h3>
+
+                    <div class="ins-sub">
+                        Select the stage of construction you want to inspect.
+                    </div>
+
+                </div>
+
+                <button type="button"
+                        class="ins-x"
+                        id="stage-close"
+                        aria-label="Back">
+                    &times;
+                </button>
+
+            </div>
+
+
+            {{-- ----------------------------------------------------------
+                 STAGE OPTIONS
+                 ---------------------------------------------------------- --}}
+
+            <div class="stage-body">
+
+
+                {{-- ======================================================
+                     SUBSTRUCTURE
+                     ====================================================== --}}
+
+                <a href="{{ route('entity.add', 'construction') }}?stage=substructure"
+                   class="stage-card">
+
+                    <div class="stage-icon">
+                        🧱
+                    </div>
+
+                    <div class="stage-content">
+
+                        <b>
+                            Substructure
+                        </b>
+
+                        <span>
+                            Inspect foundations and other construction
+                            work below the superstructure.
+                        </span>
+
+                    </div>
+
+                </a>
+
+
+                {{-- ======================================================
+                     SUPERSTRUCTURE
+                     ====================================================== --}}
+
+                <a href="{{ route('entity.add', 'construction') }}?stage=superstructure"
+                   class="stage-card">
+
+                    <div class="stage-icon">
+                        🏗️
+                    </div>
+
+                    <div class="stage-content">
+
+                        <b>
+                            Superstructure
+                        </b>
+
+                        <span>
+                            Inspect structural construction above the
+                            foundation level.
+                        </span>
+
+                    </div>
+
+                </a>
+                
+                {{-- ======================================================
+                     Main Carridor
+                     ====================================================== --}}
+
+                <a href="{{ route('entity.add', 'construction') }}?stage=superstructure"
+                   class="stage-card">
+
+                    <div class="stage-icon">
+            
+                    </div>
+
+                    <div class="stage-content">
+
+                        <b>
+                            Main Carridor
+                        </b>
+
+                        <span>
+                            Inspect all building on the main carridor.
+                        </span>
+
+                    </div>
+
+                </a>
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+{{-- ==============================================================
+     STYLES
+     ============================================================== --}}
+
+@push('styles')
+
+<style>
+
+    /* ==============================================================
+       MAIN INSPECTION MODAL
+       ============================================================== */
+
+    .ins-veil{
+        display:none;
+        position:fixed;
+        inset:0;
+        z-index:500;
+        background:rgba(51,51,51,.55);
+        padding:5vh 20px;
+        overflow-y:auto;
+    }
+
+    .ins-veil.on{
+        display:block;
+    }
+
+    .ins-box{
+        max-width:820px;
+        margin:0 auto;
+        background:var(--white);
+        box-shadow:var(--shadow);
+    }
+
+
+    /* ==============================================================
+       MAIN HEADER
+       ============================================================== */
+
+    .ins-head{
+        display:flex;
+        justify-content:space-between;
+        align-items:flex-start;
+        gap:16px;
+        padding:22px 26px;
+        border-bottom:1px solid var(--border);
+    }
+
+    .ins-head h3{
+        font-family:var(--f-head);
+        font-size:19px;
+        font-weight:700;
+        color:var(--ink);
+        margin:0;
+    }
+
+    .ins-sub{
+        font-size:13px;
+        color:var(--body-text);
+        margin-top:3px;
+    }
+
+    .ins-x{
+        border:0;
+        background:none;
+        font-size:26px;
+        line-height:1;
+        color:var(--tertiary);
+        cursor:pointer;
+        padding:0 4px;
+    }
+
+    .ins-x:hover{
+        color:var(--danger);
+    }
+
+
+    /* ==============================================================
+       CATEGORY BODY
+       ============================================================== */
+
+    .ins-body{
+        padding:6px 26px 26px;
+    }
+
+    .ins-group{
+        font-family:var(--f-head);
+        font-size:10px;
+        font-weight:600;
+        letter-spacing:1.1px;
+        text-transform:uppercase;
+        color:var(--tertiary);
+        margin:20px 0 10px;
+        padding-bottom:6px;
+        border-bottom:1px solid var(--border);
+    }
+
+    .ins-grid{
+        display:grid;
+        gap:10px;
+        grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+    }
+
+
+    /* ==============================================================
+       INSPECTION CARDS
+       ============================================================== */
+
+    .ins-card{
+        display:block;
+        padding:14px 16px;
+        background:var(--canvas);
+        text-decoration:none;
+        border-left:3px solid var(--success);
+        transition:all .18s;
+    }
+
+    .ins-card:hover{
+        background:var(--white);
+        box-shadow:var(--shadow-sm);
+        transform:translateY(-2px);
+    }
+
+    .ins-card b{
+        display:block;
+        font-family:var(--f-head);
+        font-size:14px;
+        font-weight:600;
+        color:var(--ink);
+        margin-bottom:3px;
+    }
+
+    .ins-card span{
+        display:block;
+        font-size:11.5px;
+        color:var(--body-text);
+        line-height:1.5;
+    }
+
+
+    /* ==============================================================
+       DISABLED / NOT READY CARDS
+       ============================================================== */
+
+    .ins-card.off{
+        border-left-color:var(--border);
+        opacity:.55;
+        cursor:not-allowed;
+    }
+
+    .ins-card.off span{
+        font-style:italic;
+        color:var(--tertiary);
+    }
+
+
+    /* ==============================================================
+       CONSTRUCTION BUTTON
+       ============================================================== */
+
+    .construction-card{
+        width:100%;
+        border-top:0;
+        border-right:0;
+        border-bottom:0;
+        text-align:left;
+        font:inherit;
+        cursor:pointer;
+    }
+
+    .construction-card:hover{
+        background:var(--white);
+        box-shadow:var(--shadow-sm);
+        transform:translateY(-2px);
+    }
+
+
+    /* ==============================================================
+       CONSTRUCTION STAGE PANEL
+       ============================================================== */
+
+    .stage-panel{
+        display:none;
+        background:var(--white);
+    }
+
+    .stage-panel.on{
+        display:block;
+    }
+
+
+    /* ==============================================================
+       STAGE HEADER
+       ============================================================== */
+
+    .stage-head{
+        display:flex;
+        justify-content:space-between;
+        align-items:flex-start;
+        gap:16px;
+        padding:22px 26px;
+        border-top:1px solid var(--border);
+        border-bottom:1px solid var(--border);
+    }
+
+    .stage-head h3{
+        font-family:var(--f-head);
+        font-size:19px;
+        font-weight:700;
+        color:var(--ink);
+        margin:0;
+    }
+
+
+    /* ==============================================================
+       STAGE OPTIONS
+       ============================================================== */
+
+    .stage-body{
+        padding:26px;
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:14px;
+    }
+
+    .stage-card{
+        display:flex;
+        align-items:flex-start;
+        gap:14px;
+        padding:18px;
+        background:var(--canvas);
+        text-decoration:none;
+        border-left:3px solid var(--success);
+        transition:all .18s;
+    }
+
+    .stage-card:hover{
+        background:var(--white);
+        box-shadow:var(--shadow-sm);
+        transform:translateY(-2px);
+    }
+
+    .stage-icon{
+        font-size:28px;
+        line-height:1;
+        flex-shrink:0;
+    }
+
+    .stage-content{
+        min-width:0;
+    }
+
+    .stage-card b{
+        display:block;
+        font-family:var(--f-head);
+        font-size:15px;
+        font-weight:600;
+        color:var(--ink);
+        margin-bottom:5px;
+    }
+
+    .stage-card span{
+        display:block;
+        font-size:12px;
+        color:var(--body-text);
+        line-height:1.5;
+    }
+
+
+    /* ==============================================================
+       MOBILE
+       ============================================================== */
+
+    @media(max-width:640px){
+
+        .ins-veil{
+            padding:0;
+        }
+
+        .ins-box{
+            min-height:100vh;
+        }
+
+        .ins-grid{
+            grid-template-columns:1fr;
+        }
+
+        .stage-body{
+            grid-template-columns:1fr;
+            padding:20px;
+        }
+
+        .stage-head{
+            padding:20px;
+        }
+
+    }
+
+
+    /* ==============================================================
+       PRINT
+       ============================================================== */
+
+    @media print{
+
+        .ins-veil{
+            display:none!important;
+        }
+
+    }
+
+</style>
+
+@endpush
+
+
+{{-- ==============================================================
+     JAVASCRIPT
+     ============================================================== --}}
+
+@push('scripts')
+
+<script>
+
+(function () {
+
+    /*
+     * Main inspection chooser
+     */
+    var btn   = document.getElementById('inspect-btn');
+    var veil  = document.getElementById('inspect-veil');
+    var close = document.getElementById('inspect-close');
+
+    /*
+     * Construction stage selector
+     */
+    var constructionBtn = document.getElementById('construction-stage-btn');
+    var stagePanel      = document.getElementById('construction-stage-panel');
+    var stageClose      = document.getElementById('stage-close');
+
+
+    /*
+     * If the main modal does not exist, do nothing.
+     */
+    if (!btn || !veil) {
+        return;
+    }
+
+
+    /* ==============================================================
+       SHOW / HIDE MAIN MODAL
+       ============================================================== */
+
+    function showModal(on) {
+
+        veil.classList.toggle('on', on);
+
+        document.body.style.overflow = on
+            ? 'hidden'
+            : '';
+
+        /*
+         * Whenever the modal is closed, return to the
+         * category selection screen.
+         */
+        if (!on && stagePanel) {
+
+            stagePanel.classList.remove('on');
+
+        }
+
+    }
+
+
+    /* ==============================================================
+       OPEN INSPECTION CHOOSER
+       ============================================================== */
+
+    btn.addEventListener('click', function () {
+
+        showModal(true);
+
+    });
+
+
+    /* ==============================================================
+       CLOSE INSPECTION CHOOSER
+       ============================================================== */
+
+    if (close) {
+
+        close.addEventListener('click', function () {
+
+            showModal(false);
+
+        });
+
+    }
+
+
+    /* ==============================================================
+       CONSTRUCTION STAGE SELECTION
+       ============================================================== */
+
+    if (constructionBtn && stagePanel) {
+
+        constructionBtn.addEventListener('click', function () {
+
+            /*
+             * Hide the category list.
+             */
+            var categoryBody =
+                document.getElementById('inspection-category-body');
+
+            if (categoryBody) {
+
+                categoryBody.style.display = 'none';
+
+            }
+
+
+            /*
+             * Show construction stage selection.
+             */
+            stagePanel.classList.add('on');
+
+        });
+
+    }
+
+
+    /* ==============================================================
+       CLOSE / BACK FROM STAGE SELECTION
+       ============================================================== */
+
+    if (stageClose && stagePanel) {
+
+        stageClose.addEventListener('click', function () {
+
+            stagePanel.classList.remove('on');
+
+            var categoryBody =
+                document.getElementById('inspection-category-body');
+
+            if (categoryBody) {
+
+                categoryBody.style.display = '';
+
+            }
+
+        });
+
+    }
+
+
+    /* ==============================================================
+       CLICK BACKDROP TO CLOSE
+       ============================================================== */
+
+    veil.addEventListener('click', function (e) {
+
+        if (e.target === veil) {
+
+            showModal(false);
+
+        }
+
+    });
+
+
+    /* ==============================================================
+       ESCAPE KEY
+       ============================================================== */
+
+    document.addEventListener('keydown', function (e) {
+
+        if (
+            e.key === 'Escape' &&
+            veil.classList.contains('on')
+        ) {
+
+            /*
+             * If stage selector is open, first go back
+             * to categories.
+             */
+            if (
+                stagePanel &&
+                stagePanel.classList.contains('on')
+            ) {
+
+                stagePanel.classList.remove('on');
+
+                var categoryBody =
+                    document.getElementById('inspection-category-body');
+
+                if (categoryBody) {
+
+                    categoryBody.style.display = '';
+
+                }
+
+                return;
+            }
+
+
+            /*
+             * Otherwise close the entire modal.
+             */
+            showModal(false);
+
+        }
+
+    });
+
+})();
+
+</script>
+
+@endpush
+
+@endcan

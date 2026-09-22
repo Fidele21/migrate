@@ -1,0 +1,333 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Document;
+use App\Models\Fine;
+use App\Models\Inspection;
+use App\Models\User;
+use App\Services\InspectionStats;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+/**
+ * The dashboard, chosen by role.
+ *
+ * A Secretary has no use for compliance charts and a Recovery Officer has
+ * no use for checklist sections. Each role opens to the work that is
+ * theirs, and to nothing that is not.
+ */
+class DashboardController extends Controller
+{
+    public function __construct(private InspectionStats $stats) {}
+
+    public function index()
+    {
+        $user = auth()->user();
+        $role = $user->roles->pluck('name')->first() ?? 'Inspector';
+
+        return match ($role) {
+            'Secretary'        => $this->secretary($user),
+            'Recovery Officer' => $this->recovery($user),
+            'Administrator'    => $this->administrator($user),
+            'Chief Inspector',
+            'Senior Inspector',
+            'Director of Inspection' => $this->supervisor($user, $role),
+            default            => $this->inspector($user, $role),
+        };
+    }
+
+    /* ==============================================================
+       Inspector and Lead Inspector — their own field work
+       ============================================================== */
+    private function inspector(User $user, string $role)
+    {
+        $scope = $user->isCityWide() ? [] : ['district' => $user->district?->name];
+
+        $mine = Inspection::where('inspector_id', $user->id);
+
+        return view('dashboard.inspector', [
+            'role'     => $role,
+            'district' => $user->district?->name,
+            'mine' => [
+                'drafts'     => (clone $mine)->where('status', 'draft')->count(),
+                'completed'  => (clone $mine)->where('status', 'completed')->count(),
+                'this_month' => (clone $mine)->where('status', 'completed')
+                                    ->whereMonth('inspection_date', now()->month)
+                                    ->whereYear('inspection_date', now()->year)->count(),
+                'mean'       => round((float) (clone $mine)->where('status', 'completed')->avg('compliance'), 1),
+            ],
+            'returned' => $this->docs(fn ($q) => $q->where('created_by', $user->id)
+                                ->where('status', Document::RETURNED))->count(),
+            'inReview' => $this->docs(fn ($q) => $q->where('created_by', $user->id)
+                                ->whereIn('status', [Document::PENDING_DIRECTOR,
+                                    Document::PENDING_SENIOR, Document::PENDING_CHIEF]))->count(),
+            'drafts'   => (clone $mine)->with('entity')->where('status', 'draft')
+                                ->orderByDesc('updated_at')->limit(5)->get(),
+            'recent'   => (clone $mine)->with('entity')->where('status', 'completed')
+                                ->orderByDesc('inspection_date')->limit(6)->get(),
+            'overview'     => $this->stats->overview($scope),
+            'distribution' => $this->stats->distribution($scope),
+            'failures'     => $this->stats->topFailures($scope, 5),
+        ]);
+    }
+
+    /* ==============================================================
+       Director, Senior and Chief — oversight, filtered
+       ============================================================== */
+    private function supervisor(User $user, string $role)
+    {
+        $request = request();
+        /* An activity chosen on the overview opens that activity's own
+           dashboard, carrying the location filters with it. There is one
+           dashboard per activity, reached either here or from the menu. */
+        if ($activity = $request->query('activity')) {
+            return redirect()->route('type.show', array_merge(
+                ['code' => $activity],
+                array_filter([
+                    'district' => $request->query('district'),
+                    'sector'   => $request->query('sector'),
+                    'cell'     => $request->query('cell'),
+                    'band'     => $request->query('band'),
+                ])
+            ));
+        }
+
+        $filters = array_filter([
+            'district' => $district,
+            'sector'   => $request->query('sector'),
+            'cell'     => $request->query('cell'),
+        ]);
+
+        /*$filters = array_filter([
+            'type'     => $request->query('activity'),
+            'district' => $district,
+            'sector'   => $request->query('sector'),
+            'cell'     => $request->query('cell'),
+        ]);**/
+
+        $band = $request->query('band');
+
+        /* ---- What is waiting on this person ---- */
+        $queue = [];
+
+        if ($user->can('document.verify.district')) {
+            $queue['Awaiting my verification'] =
+                $this->docs(fn ($q) => $q->where('status', Document::PENDING_DIRECTOR)
+                    ->when(! $user->isCityWide(), fn ($b) => $b->where('district_id', $user->district_id)))->count();
+        }
+        if ($user->can('document.verify.city')) {
+            $queue['Awaiting central verification'] =
+                $this->docs(fn ($q) => $q->where('status', Document::PENDING_SENIOR))->count();
+        }
+        if ($user->can('document.approve')) {
+            $queue['Awaiting my signature'] =
+                $this->docs(fn ($q) => $q->where('status', Document::PENDING_CHIEF))->count();
+        }
+        if ($user->can('fine.confirm')) {
+            $queue['Fines to confirm'] = $this->fines(fn ($q) => $q->where('status', Fine::PROPOSED))->count();
+        }
+
+        /* ---- Records, narrowed by compliance band if one is chosen ---- */
+        $records = collect($this->stats->lowestScoring($filters, 200));
+
+        if ($band) {
+            $records = $records->filter(function ($r) use ($band) {
+                $v = (float) $r->compliance;
+                return match ($band) {
+                    'compliant'   => $v >= 85,
+                    'minor'       => $v >= 70 && $v < 85,
+                    'corrective'  => $v >= 50 && $v < 70,
+                    'enforcement' => $v < 50,
+                    default       => true,
+                };
+            })->values();
+        }
+
+        return view('dashboard.supervisor', [
+            'role'      => $role,
+            'district'  => $user->district?->name,
+            'cityWide'  => $user->isCityWide(),
+            'scopeName' => $district ?: 'All districts',
+            'queue'     => $queue,
+            'filters'   => [
+                'activity' => $request->query('activity'),
+                'district' => $district,
+                'sector'   => $request->query('sector'),
+                'cell'     => $request->query('cell'),
+                'band'     => $band,
+            ],
+            'activities' => $this->activityList(),
+            'pending'    => $this->docs(fn ($q) => $q->with('creator')
+                                ->whereIn('status', [Document::PENDING_DIRECTOR,
+                                    Document::PENDING_SENIOR, Document::PENDING_CHIEF])
+                                ->when(! $user->isCityWide(), fn ($b) => $b->where('district_id', $user->district_id))
+                                ->orderBy('submitted_at'))->limit(8)->get(),
+
+            'overview'     => $this->stats->overview($filters),
+            'districts'    => $this->stats->byDistrict(
+                                $user->isCityWide()
+                                    ? array_filter(['type' => $filters['type'] ?? null])
+                                    : $filters),
+            'distribution' => $this->stats->distribution($filters),
+            'sections'     => $this->stats->bySection($filters),
+            'records'      => $records->take(8),
+            'recordCount'  => $records->count(),
+            'failures'     => $this->stats->topFailures($filters, 6),
+            'byType'       => $this->stats->byType(),
+            'drafts'       => Inspection::where('status', 'draft')
+                                ->when(! $user->isCityWide(), fn ($q) => $q->where('district_id', $user->district_id))
+                                ->when($filters['type'] ?? null, fn ($q, $t) => $q->where('type_code', $t))
+                                ->count(),
+        ]);
+    }
+
+    /* ==============================================================
+       Secretary — the registry, nothing else
+       ============================================================== */
+    private function secretary(User $user)
+    {
+        $letters = $this->docs(fn ($q) => $q->where('type', 'letter')
+            ->whereIn('status', [Document::APPROVED, Document::ISSUED])
+            ->orderByDesc('approved_at'))->get();
+
+        return view('dashboard.secretary', [
+            'role'       => 'Secretary',
+            'awaiting'   => $letters->filter(fn ($l) => blank($l->reference_number)),
+            'toPrint'    => $letters->filter(fn ($l) => $l->reference_number && ! $l->printed_at),
+            'toScan'     => $letters->filter(fn ($l) => $l->printed_at && ! $l->scan_path),
+            'toDispatch' => $letters->filter(fn ($l) => $l->scan_path && ! $l->dispatched_at),
+            'issuedMonth'=> $letters->filter(fn ($l) => $l->dispatched_at
+                                && $l->dispatched_at->isSameMonth(now()))->count(),
+            'issuedTotal'=> $letters->filter(fn ($l) => $l->dispatched_at)->count(),
+            'recent'     => $letters->filter(fn ($l) => $l->dispatched_at)->take(8),
+            'nextRef'    => $this->lastSerial(),
+        ]);
+    }
+
+    /* ==============================================================
+       Recovery Officer — money, nothing else
+       ============================================================== */
+    private function recovery(User $user)
+    {
+        if (! Schema::hasTable('fines')) {
+            return view('dashboard.recovery', ['role' => 'Recovery Officer', 'empty' => true]);
+        }
+
+        $all     = Fine::with('entity')->get();
+        $payable = $all->filter(fn ($f) => $f->isPayable());
+
+        $months = DB::table('fine_payments')
+            ->selectRaw("DATE_FORMAT(paid_on, '%Y-%m') AS month, SUM(amount) AS total")
+            ->where('paid_on', '>=', now()->subMonths(11)->startOfMonth())
+            ->groupBy('month')->orderBy('month')->get();
+
+        return view('dashboard.recovery', [
+            'role'  => 'Recovery Officer',
+            'empty' => false,
+            'summary' => [
+                'outstanding' => $payable->sum(fn ($f) => $f->outstanding()),
+                'collected'   => (float) $all->sum('amount_paid'),
+                'overdue'     => $payable->filter(fn ($f) => $f->isOverdue())->count(),
+                'overdue_sum' => $payable->filter(fn ($f) => $f->isOverdue())->sum(fn ($f) => $f->outstanding()),
+                'payable'     => $payable->count(),
+                'settled'     => $all->where('status', Fine::PAID)->count(),
+                'this_month'  => (float) DB::table('fine_payments')
+                                    ->whereMonth('paid_on', now()->month)
+                                    ->whereYear('paid_on', now()->year)->sum('amount'),
+            ],
+            'overdue' => $payable->filter(fn ($f) => $f->isOverdue())
+                            ->sortBy('due_date')->take(10),
+            'dueSoon' => $payable->filter(fn ($f) => ! $f->isOverdue() && $f->due_date
+                            && $f->due_date->lte(now()->addDays(14)))->sortBy('due_date')->take(8),
+            'months'     => $months,
+            'byDistrict' => $payable->groupBy(fn ($f) => $f->entity->district ?? '—')
+                            ->map(fn ($g) => ['count' => $g->count(), 'sum' => $g->sum(fn ($f) => $f->outstanding())]),
+        ]);
+    }
+
+    /* ==============================================================
+       Administrator — accounts and the system
+       ============================================================== */
+    private function administrator(User $user)
+    {
+        $users = User::with('roles', 'district')->get();
+
+        return view('dashboard.admin', [
+            'role'  => 'Administrator',
+            'users' => $users,
+            'summary' => [
+                'total'    => $users->count(),
+                'active'   => $users->where('is_active', true)->count(),
+                'inactive' => $users->where('is_active', false)->count(),
+                'unset'    => $users->where('must_change_password', true)->count(),
+                'nosig'    => $users->whereNull('signature_path')->count(),
+                'never'    => $users->whereNull('last_login_at')->count(),
+            ],
+            'byRole' => $users->groupBy(fn ($u) => $u->roles->pluck('name')->first() ?? '— none —')
+                            ->map->count()->sortDesc(),
+            'byDistrict' => $users->groupBy(fn ($u) => $u->district?->name ?? 'All districts')->map->count(),
+            'recent' => $users->sortByDesc('last_login_at')->take(8),
+            'stale'  => $users->filter(fn ($u) => $u->is_active
+                            && ($u->must_change_password || ! $u->last_login_at))->take(10),
+            'counts' => [
+                'inspections' => Inspection::count(),
+                'documents'   => Schema::hasTable('documents') ? Document::count() : 0,
+                'fines'       => Schema::hasTable('fines') ? Fine::count() : 0,
+                'entities'    => DB::table('entities')->whereNull('deleted_at')->count(),
+            ],
+        ]);
+    }
+
+    /* ==============================================================
+       Helpers
+       ============================================================== */
+
+    /** Every inspection category, grouped as the sidebar groups them. */
+    private function activityList(): array
+    {
+        $out = [];
+
+        foreach (config('inspection_types.groups') as $group) {
+            $out[$group['label']] = collect($group['types'])
+                ->map(fn ($t, $code) => ['code' => $code, 'name' => $t['name'], 'live' => $t['live']])
+                ->values()->all();
+        }
+
+        return $out;
+    }
+
+    /**
+     * Guards for tables that may not exist yet, so a dashboard does not
+     * fail merely because a later migration has not been run.
+     */
+    private function docs(callable $fn)
+    {
+        if (! Schema::hasTable('documents')) {
+            return Document::whereRaw('1 = 0');
+        }
+        return $fn(Document::query());
+    }
+
+    private function fines(callable $fn)
+    {
+        if (! Schema::hasTable('fines')) {
+            return Fine::whereRaw('1 = 0');
+        }
+        return $fn(Fine::query());
+    }
+
+    /**
+     * The last registry number recorded this year, shown to the
+     * Secretary as a hint. The registry is kept outside this platform,
+     * so the next number cannot be known here.
+     */
+    private function lastSerial(): ?int
+    {
+        if (! Schema::hasTable('documents')) {
+            return null;
+        }
+
+        return Document::whereYear('issued_at', now()->year)->max('serial');
+    }
+}

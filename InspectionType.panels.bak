@@ -1,0 +1,163 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Inspection;
+use App\Services\InspectionStats;
+use App\Support\ComplianceBand;
+use App\Support\FiscalPeriod;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+
+/**
+ * One dashboard per inspection category.
+ *
+ * Everything on this screen counts premises, not inspections. A station
+ * visited three times appears once, judged on where it stands now. The
+ * alternative weights the picture by how often somewhere happened to be
+ * revisited, which is not a measure of anything.
+ */
+class InspectionTypeController extends Controller
+{
+    public function __construct(private InspectionStats $stats) {}
+
+    public static function resolve(string $code): array
+    {
+        foreach (config('inspection_types.groups') as $group) {
+            if (isset($group['types'][$code])) {
+                return $group['types'][$code] + ['code' => $code, 'group' => $group['label']];
+            }
+        }
+
+        throw new NotFoundHttpException("Unknown inspection type [$code]");
+    }
+
+    public function show(Request $request, string $code)
+    {
+        $type = self::resolve($code);
+        $user = auth()->user();
+
+        abort_unless($user->can('inspection.view.own'), 403);
+
+        if (! $type['live']) {
+            return view('type-planned', compact('type'));
+        }
+
+        /* A Director sees only their own district, whatever the URL says. */
+        $district = $user->isCityWide()
+            ? $request->query('district')
+            : $user->district?->name;
+
+        $sector = $request->query('sector');
+        $cell   = $request->query('cell');
+
+        [$from, $to, $periodLabel] = FiscalPeriod::resolve(
+            $request->query('period'),
+            $request->query('from'),
+            $request->query('to')
+        );
+
+        $filters = array_filter([
+            'type'     => $code,
+            'district' => $district,
+            'sector'   => $sector,
+            'cell'     => $cell,
+            'from'     => $from?->toDateString(),
+            'to'       => $to?->toDateString(),
+        ]);
+
+        /* ---- One premises, one row ---- */
+        $premises = collect($this->stats->latestPerPremises($filters));
+        $scores   = $premises->pluck('compliance')->map(fn ($v) => (float) $v);
+
+        /* Total visits, so frequency and repeat counts are honest. */
+        /* Visits within the same window as everything else, so the
+           frequency figure and the period agree. */
+        $visits = Inspection::query()
+            ->where('type_code', $code)
+            ->where('status', 'completed')
+            ->whereIn('entity_id', $premises->pluck('entity_id'))
+            ->when($from, fn ($q) => $q->whereDate('inspection_date', '>=', $from))
+            ->when($to,   fn ($q) => $q->whereDate('inspection_date', '<=', $to))
+            ->selectRaw('entity_id, COUNT(*) AS n')
+            ->groupBy('entity_id')
+            ->pluck('n', 'entity_id');
+
+        $compliant = $scores->filter(fn ($v) => ComplianceBand::isCompliant($v))->count();
+
+        /* ---- Criteria, worst first, counted by premises ---- */
+        $criteria = collect($this->stats->criteriaByPremises($filters))
+            ->sortByDesc('premises_failed')
+            ->values();
+        'panels'    => $panels,
+            'byArea'    => $byArea,
+            'areaLevel' => $district ? 'sector' : 'district',
+            
+        /* Which two upper panels this category shows. A category not
+           listed gets districts and ranking, which suit anything. */
+        $panels = config('inspection_types.panels.' . $code, ['districts', 'ranking']);
+
+        /* The district panel shows districts until one is chosen, then
+           the sectors within it ¡ª the same chart answering "which
+           district is worst" and "where in Gasabo". */
+        $byArea = $district
+            ? $this->stats->bySector($filters)
+            : $this->stats->districtsByPremises($filters);
+
+        return view('type', [
+            'type'      => $type,
+            'cityWide'  => $user->isCityWide(),
+            'district'  => $user->district?->name,
+            'scopeName' => $this->scopeName($district, $sector, $cell),
+            'canExport' => $user->can('export.excel') || $user->can('export.pdf'),
+
+            'filters' => [
+                'district' => $district,
+                'sector'   => $sector,
+                'cell'     => $cell,
+                'period'   => $request->query('period'),
+                'from'     => $request->query('from'),
+                'to'       => $request->query('to'),
+            ],
+            'periodLabel'   => $periodLabel,
+            'periodOptions' => FiscalPeriod::options($this->earliestYear($code)),
+
+            'figures' => [
+                'premises'    => $premises->count(),
+                'inspections' => (int) $visits->sum(),
+                'frequency'   => $premises->count()
+                                    ? round($visits->sum() / $premises->count(), 1)
+                                    : 0,
+                'repeat'      => $visits->filter(fn ($n) => $n > 1)->count(),
+                'compliant'   => $compliant,
+                'uncompliant' => $premises->count() - $compliant,
+                'mean'        => $scores->count() ? round($scores->avg(), 1) : 0,
+            ],
+
+            'tally'    => ComplianceBand::tally($scores),
+            'gap'      => $this->stats->sitingVsOperationsByPremises($filters, $code),
+            'mapped'   => $premises->filter(fn ($p) => $p->latitude && $p->longitude)->values()->all(),
+            'sections' => $this->stats->sectionsByPremises($filters),
+            'criteria' => $criteria->take(12)->all(),
+        ]);
+    }
+
+    /* ============================================================== */
+
+    private function scopeName(?string $district, ?string $sector, ?string $cell): string
+    {
+        $parts = array_filter([$district, $sector, $cell]);
+
+        return $parts ? implode(' Â· ', $parts) : 'City of Kigali';
+    }
+
+    private function earliestYear(string $code): int
+    {
+        $first = Inspection::where('type_code', $code)->min('inspection_date');
+
+        return $first
+            ? FiscalPeriod::yearOf(Carbon::parse($first))
+            : FiscalPeriod::yearOf();
+    }
+}

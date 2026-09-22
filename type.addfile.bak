@@ -1,0 +1,643 @@
+@extends('layouts.app')
+@section('title', $type['name'])
+
+@php
+  use App\Support\ComplianceBand;
+  $active = collect($filters)->filter()->count();
+  $q = collect($filters)->filter()->all();
+@endphp
+
+@section('content')
+
+@include('partials.filters', [
+  'crumb'     => $type['group'],
+  'title'     => $type['name'],
+  'scopeName' => $scopeName,
+  'resetUrl'  => route('type.show', $type['code']),
+])
+
+@if($figures['premises'] === 0)
+
+<section class="panel" style="padding:60px 24px">
+  <div class="empty">
+    <b>No premises inspected in this selection</b>
+    <span>Nothing recorded for {{ $type['name'] }} in {{ $scopeName }} during {{ strtolower($periodLabel) }}.</span>
+    <div style="margin-top:20px">
+      <a href="{{ route('type.show', $type['code']) }}" class="btn btn-primary">Reset filters</a>
+    </div>
+  </div>
+</section>
+
+@else
+
+{{-- ══════════ Figures ══════════ --}}
+<div class="kpi-row">
+  <a href="{{ route('register.index', array_merge(['code' => $type['code']], $q)) }}" class="kpi">
+    <span class="k-label">Premises</span>
+    <b class="k-value">{{ $figures['premises'] }}</b>
+    <span class="k-note">inspected</span>
+  </a>
+
+  <a href="{{ route('register.index', array_merge(['code' => $type['code']], $q)) }}" class="kpi">
+    <span class="k-label">Inspections</span>
+    <b class="k-value">{{ $figures['inspections'] }}</b>
+    <span class="k-note">{{ $figures['frequency'] }} per premises</span>
+  </a>
+
+  <a href="{{ route('register.index', array_merge(['code' => $type['code'], 'visits' => 'repeat'], $q)) }}" class="kpi">
+    <span class="k-label">Visited more than once</span>
+    <b class="k-value">{{ $figures['repeat'] }}</b>
+    <span class="k-note">{{ $figures['premises'] ? round(100 * $figures['repeat'] / $figures['premises']) : 0 }}% of premises</span>
+  </a>
+
+  <a href="{{ route('register.index', array_merge(['code' => $type['code'], 'band' => 'compliant'], $q)) }}" class="kpi good">
+    <span class="k-label">Compliant</span>
+    <b class="k-value">{{ $figures['compliant'] }}</b>
+    <span class="k-note">98% and above</span>
+  </a>
+
+  <a href="{{ route('register.index', array_merge(['code' => $type['code'], 'band' => 'uncompliant'], $q)) }}" class="kpi bad">
+    <span class="k-label">Non-compliant</span>
+    <b class="k-value">{{ $figures['uncompliant'] }}</b>
+    <span class="k-note">below 98%</span>
+  </a>
+
+  <a href="{{ route('analysis.group', array_merge(['code' => $type['code'], 'group' => 'all'], $q)) }}" class="kpi accent">
+    <span class="k-label">Mean compliance</span>
+    <b class="k-value">{{ $figures['mean'] }}<i>%</i></b>
+    <span class="k-note">across premises</span>
+  </a>
+</div>
+
+{{-- ══════════ Main grid ══════════ --}}
+<div class="main-grid">
+
+  {{-- Map --}}
+  <section class="panel map-panel" id="map-panel">
+    <div class="p-head">
+      <div>
+        <h3>{{ $scopeName }}</h3>
+        <div class="p-desc">{{ count($mapped) }} of {{ $figures['premises'] }} premises located</div>
+      </div>
+      <button type="button" class="icon-btn" id="map-full" title="Full view">⛶</button>
+    </div>
+
+    @if(count($mapped))
+      <div id="cok-map"></div>
+    @else
+      <div class="empty map-empty">
+        <b>No coordinates recorded</b>
+        <span>Use <em>Capture Location</em> on the inspection form.</span>
+      </div>
+    @endif
+
+    <div class="band-row">
+      @foreach($tally as $key => $b)
+        <a href="{{ route('register.index', array_merge(['code' => $type['code'], 'band' => $key], $q)) }}"
+           class="band" style="--c:{{ $b['colour'] }}" title="{{ $b['note'] }}">
+          <b>{{ $b['count'] }}</b>
+          <span>{{ $b['short'] }}</span>
+        </a>
+      @endforeach
+    </div>
+  </section>
+
+  {{-- Siting --}}
+  <section class="panel area-siting" id="panel-siting">
+    <div class="p-head compact">
+      <h3>Siting &amp; Design</h3>
+      <div class="p-tools">
+        <button type="button" class="icon-btn panel-full" data-panel="siting" title="Full screen">⛶</button>
+        <a href="{{ route('analysis.group', array_merge(['code' => $type['code'], 'group' => 'siting'], $q)) }}"
+           class="icon-btn" title="Detail">&rsaquo;</a>
+      </div>
+    </div>
+    <div class="gauge">
+      <canvas id="cSiting"></canvas>
+      <div class="gauge-centre"><b>{{ $gap['siting'] }}<i>%</i></b></div>
+    </div>
+    <div class="g-note">Cannot be corrected by housekeeping</div>
+  </section>
+
+  {{-- Operations --}}
+  <section class="panel area-ops" id="panel-ops">
+    <div class="p-head compact">
+      <h3>Operations &amp; Equipment</h3>
+      <div class="p-tools">
+        <button type="button" class="icon-btn panel-full" data-panel="ops" title="Full screen">⛶</button>
+        <a href="{{ route('analysis.group', array_merge(['code' => $type['code'], 'group' => 'operations'], $q)) }}"
+           class="icon-btn" title="Detail">&rsaquo;</a>
+      </div>
+    </div>
+    <div class="gauge">
+      <canvas id="cOps"></canvas>
+      <div class="gauge-centre"><b>{{ $gap['operations'] }}<i>%</i></b></div>
+    </div>
+    <div class="g-note">Usually put right quickly</div>
+  </section>
+
+  {{-- Analysis by criteria --}}
+  <section class="panel area-analysis" id="panel-criteria-list">
+    <div class="p-head compact">
+      <div>
+        <h3>Analysis by Criteria</h3>
+        <div class="p-desc">Premises failing each requirement</div>
+      </div>
+      <div class="p-tools">
+        <button type="button" class="icon-btn panel-full" data-panel="criteria-list" title="Full screen">⛶</button>
+        <button type="button" class="icon-btn scroll-up" data-target="crit-scroll" title="Up">&#9650;</button>
+        <button type="button" class="icon-btn scroll-down" data-target="crit-scroll" title="Down">&#9660;</button>
+        <a href="{{ route('analysis.group', array_merge(['code' => $type['code'], 'group' => 'all'], $q)) }}"
+           class="icon-btn" title="Detail">&rsaquo;</a>
+      </div>
+    </div>
+
+    <div class="scroller" id="crit-scroll">
+      @foreach($criteria as $c)
+        <a href="{{ route('analysis.item', array_merge(['code' => $type['code'], 'item' => $c->item_id], $q)) }}"
+           class="crit">
+          <div class="c-n">{{ $c->premises_failed }}</div>
+          <div class="c-mid">
+            <div class="c-label">{{ Str::limit(rtrim($c->label, '. '), 62) }}</div>
+            <div class="c-track">
+              <div class="c-fill" style="width:{{ $c->premises_assessed ? round(100 * $c->premises_failed / $c->premises_assessed) : 0 }}%"></div>
+            </div>
+          </div>
+          <div class="c-pct">{{ $c->compliance }}%</div>
+        </a>
+      @endforeach
+    </div>
+  </section>
+
+  {{-- Criteria compliance --}}
+  <section class="panel area-criteria" id="panel-criteria-chart">
+    <div class="p-head compact">
+      <div>
+        <h3>Criteria Compliance</h3>
+        <div class="p-desc">Sections, weakest first</div>
+      </div>
+      <div class="p-tools">
+        <button type="button" class="icon-btn panel-full" data-panel="criteria-chart" title="Full screen">⛶</button>
+        <div class="seg" id="sec-toggle">
+          <button type="button" class="on" data-view="bar" title="Bars">&#9636;</button>
+          <button type="button" data-view="radar" title="Radar">&#9673;</button>
+        </div>
+        <a href="{{ route('analysis.group', array_merge(['code' => $type['code'], 'group' => 'all'], $q)) }}"
+           class="icon-btn" title="Detail">&rsaquo;</a>
+      </div>
+    </div>
+    <div class="chart-box"><canvas id="cSections"></canvas></div>
+  </section>
+
+</div>
+@endif
+
+
+{{-- ═══════ Modal overlay for links ═══════ --}}
+<div id="page-overlay" style="display:none; position:fixed; inset:0; z-index:9999; background:#fff; padding:20px; box-shadow:0 0 40px rgba(0,0,0,0.3); animation:fadeIn 0.2s ease;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <h3 style="margin:0; font-family:var(--f-head);" id="overlay-title">Loading…</h3>
+    <button id="overlay-close" style="background:none; border:none; font-size:32px; cursor:pointer; color:var(--tertiary);">&times;</button>
+  </div>
+  <iframe id="overlay-iframe" style="width:100%; height:calc(100% - 60px); border:0; background:var(--canvas);"></iframe>
+</div>
+
+@endsection
+
+@section('scripts')
+<script>
+/* ═══════ Scroll buttons ═══════ */
+document.querySelectorAll('.scroll-up, .scroll-down').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var box = document.getElementById(b.dataset.target);
+    if (box) box.scrollBy({ top: b.classList.contains('scroll-up') ? -140 : 140, behavior: 'smooth' });
+  });
+});
+
+/* ═══════ Full‑screen panels (unified) ═══════ */
+document.querySelectorAll('.panel-full').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var panelId = this.dataset.panel; // 'siting', 'ops', 'criteria-list', 'criteria-chart'
+    var bodyClass = 'fullscreen-' + panelId;
+    var panelEl = document.getElementById('panel-' + panelId);
+
+    // Toggle class on body
+    var isOpen = document.body.classList.toggle(bodyClass);
+
+    // Change button icon
+    this.innerHTML = isOpen ? '&#10005;' : '&#10530;';
+
+    // If opening, resize charts inside this panel after a short delay
+    if (isOpen && panelEl) {
+      setTimeout(function () {
+        // Resize any Chart.js instances inside this panel
+        var canvases = panelEl.querySelectorAll('canvas');
+        canvases.forEach(function (canvas) {
+          var chart = Chart.getChart(canvas);
+          if (chart) chart.resize();
+        });
+        // If the panel contains a map, also invalidate its size
+        var mapContainer = panelEl.querySelector('#cok-map');
+        if (mapContainer && window.map) {
+          setTimeout(function () { window.map.invalidateSize(); }, 100);
+        }
+      }, 250);
+    }
+
+    // Also handle Esc key globally (see below)
+  });
+});
+
+// Close any full‑screen panel with Escape key
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') {
+    var openPanels = document.querySelectorAll('.panel-full');
+    openPanels.forEach(function (btn) {
+      var panelId = btn.dataset.panel;
+      var bodyClass = 'fullscreen-' + panelId;
+      if (document.body.classList.contains(bodyClass)) {
+        btn.click(); // toggle off
+      }
+    });
+  }
+});
+
+/* ═══════ Modal overlay for drill‑down links ═══════ */
+(function() {
+  var overlay = document.getElementById('page-overlay');
+  var iframe = document.getElementById('overlay-iframe');
+  var closeBtn = document.getElementById('overlay-close');
+  var titleEl = document.getElementById('overlay-title');
+
+  function openOverlay(url, title) {
+    iframe.src = url;
+    titleEl.textContent = title || 'Loading…';
+    overlay.style.display = 'block';
+    document.body.style.overflow = 'hidden'; // prevent background scroll
+  }
+
+  function closeOverlay() {
+    overlay.style.display = 'none';
+    iframe.src = ''; // unload
+    document.body.style.overflow = '';
+  }
+
+  closeBtn.addEventListener('click', closeOverlay);
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) closeOverlay(); // click outside content to close
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && overlay.style.display !== 'none') closeOverlay();
+  });
+
+  // Intercept clicks on relevant links
+  document.addEventListener('click', function(e) {
+    var link = e.target.closest('a');
+    if (!link) return;
+    // Ignore if target="_blank", if it's a plain anchor, or if data-modal="false"
+    if (link.target === '_blank') return;
+    if (link.dataset.modal === 'false') return;
+    var href = link.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+
+    // Determine if we should open in modal: KPI, band, criteria, or icon-btn with detail arrow
+    var isKpi = link.closest('.kpi-row');
+    var isBand = link.closest('.band-row');
+    var isCrit = link.closest('.area-analysis') && link.classList.contains('crit');
+    var isIconDetail = link.classList.contains('icon-btn') && link.textContent.trim() === '›';
+
+    if (isKpi || isBand || isCrit || isIconDetail) {
+      e.preventDefault();
+      // Attempt to get a meaningful title from the link
+      var title = link.textContent.trim();
+      if (!title || title === '›') {
+        // Try to get from data or inner elements
+        var label = link.querySelector('.k-label')?.textContent || link.querySelector('.band span')?.textContent || link.querySelector('.c-label')?.textContent;
+        if (label) title = label;
+        else title = 'Details';
+      }
+      openOverlay(href, title);
+    }
+  });
+})();
+
+/* ═══════ Map and charts ═══════ */
+(function () {
+  var C = window.CoK;
+
+  function bandColour(v) {
+    if (v >= 98) return '#4CAF50';
+    if (v >= 70) return '#F39C12';
+    if (v >= 50) return '#E74C3C';
+    return '#B71C1C';
+  }
+
+  function bandLabel(v) {
+    if (v >= 98) return 'Compliant';
+    if (v >= 70) return 'Improvement notice and fine';
+    if (v >= 50) return 'Temporary closure';
+    return 'Permanent closure';
+  }
+
+  var mapped = @json($mapped ?? []);
+  var map = null;
+
+  if (window.L && document.getElementById('cok-map') && mapped.length) {
+    map = L.map('cok-map', { scrollWheelZoom: false, zoomControl: true });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+      { attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 19 }).addTo(map);
+
+    var bounds = [];
+    mapped.forEach(function (p) {
+      var lat = parseFloat(p.latitude), lng = parseFloat(p.longitude);
+      if (isNaN(lat) || isNaN(lng)) return;
+      var pct = parseFloat(p.compliance) || 0;
+
+      L.circleMarker([lat, lng], { radius: 9, weight: 2.5, color: '#fff',
+        fillColor: bandColour(pct), fillOpacity: .95 })
+        .bindPopup('<b>' + p.name + '</b>' + (p.sector ? p.sector + ', ' : '') + (p.district || '') +
+                   '<br>Compliance: <strong>' + pct.toFixed(1) + '%</strong><br>' + bandLabel(pct) +
+                   '<br>Inspected ' + p.inspection_date +
+                   '<br><a href="/inspect/inspections/' + p.inspection_id + '">Open report</a>',
+                   { autoPan: true, autoPanPadding: [20, 20], maxWidth: 240 })
+        .addTo(map);
+      bounds.push([lat, lng]);
+    });
+
+    if (bounds.length > 1) {
+      var b = L.latLngBounds(bounds).pad(0.15);
+      L.rectangle(b, { color: C.primary, weight: 1.5, dashArray: '6 5',
+                       fillColor: C.primary, fillOpacity: .04 }).addTo(map);
+      map.fitBounds(b, { padding: [15, 15] });
+    } else if (bounds.length === 1) {
+      map.setView(bounds[0], 15);
+    } else {
+      map.setView([-1.9441, 30.0619], 12);
+    }
+
+    map.on('click', function () { map.scrollWheelZoom.enable(); });
+    map.on('mouseout', function () { map.scrollWheelZoom.disable(); });
+    window.map = map; // store for resize
+  }
+
+  var full = document.getElementById('map-full');
+  if (full) {
+    full.addEventListener('click', function () {
+      var open = document.body.classList.toggle('map-open');
+      full.innerHTML = open ? '&#10005;' : '&#10530;';
+      if (map) setTimeout(function () { map.invalidateSize(); }, 250);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && document.body.classList.contains('map-open')) full.click();
+    });
+  }
+
+  if (!window.Chart) return;
+
+  // Store gauge chart references for resize
+  var sitingChart = null, opsChart = null;
+
+  function gauge(id, value) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var chart = new Chart(el, {
+      type: 'doughnut',
+      data: { datasets: [{ data: [value, Math.max(0, 100 - value)],
+        backgroundColor: [bandColour(value), '#EEF1F5'], borderWidth: 0 }] },
+      options: { maintainAspectRatio: false, rotation: -90, circumference: 180, cutout: '72%',
+        animation: { animateRotate: true, duration: 900 },
+        plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+    });
+    if (id === 'cSiting') sitingChart = chart;
+    if (id === 'cOps') opsChart = chart;
+    return chart;
+  }
+
+  gauge('cSiting', {{ $gap['siting'] ?? 0 }});
+  gauge('cOps',    {{ $gap['operations'] ?? 0 }});
+
+  var sections = @json($sections ?? []);
+  var secEl = document.getElementById('cSections');
+  var secChart = null;
+
+  function drawSections(view) {
+    if (!secEl || !sections.length) return;
+    if (secChart) secChart.destroy();
+
+    var labels = sections.map(function (s) { return s.title; });
+    var data = sections.map(function (s) { return s.compliance; });
+
+    secChart = new Chart(secEl, view === 'radar' ? {
+      type: 'radar',
+      data: { labels: labels, datasets: [{ data: data,
+        backgroundColor: 'rgba(52,168,219,.16)', borderColor: C.primary, borderWidth: 2,
+        pointBackgroundColor: data.map(bandColour), pointRadius: 3 }] },
+      options: { maintainAspectRatio: false, plugins: { legend: { display: false } },
+        scales: { r: { beginAtZero: true, max: 100, grid: { color: '#E0E0E0' },
+          angleLines: { color: '#E0E0E0' }, pointLabels: { font: { size: 8 } },
+          ticks: { display: false } } } }
+    } : {
+      type: 'bar',
+      data: { labels: labels, datasets: [{ data: data,
+        backgroundColor: data.map(bandColour), maxBarThickness: 13 }] },
+      options: { indexAxis: 'y', maintainAspectRatio: false,
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { label: function (ctx) {
+            return ctx.parsed.x + '% of premises complying';
+          } } } },
+        scales: { x: { beginAtZero: true, max: 100, grid: { color: '#E0E0E0' },
+                       ticks: { font: { size: 9 }, callback: function (v) { return v + '%'; } } },
+                  y: { grid: { display: false }, ticks: { font: { size: 8.5 },
+                       callback: function (v) {
+                         var l = this.getLabelForValue(v);
+                         return l.length > 26 ? l.slice(0, 24) + '…' : l;
+                       } } } } }
+    });
+  }
+
+  drawSections('bar');
+
+  var secToggle = document.getElementById('sec-toggle');
+  if (secToggle) {
+    secToggle.addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (!b) return;
+      secToggle.querySelectorAll('button').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on');
+      drawSections(b.dataset.view);
+    });
+  }
+})();
+</script>
+@endsection
+
+@push('styles')
+<style>
+  /* ═══════ One screen, no page scroll ═══════ */
+  .content{padding-bottom:16px}
+
+  /* ═══════ Figures ═══════ */
+  .kpi-row{display:grid;gap:10px;grid-template-columns:repeat(2,1fr);margin-bottom:12px}
+  .kpi{background:var(--white);box-shadow:var(--shadow-sm);padding:10px 13px;
+       border-top:3px solid var(--primary);text-decoration:none;display:block;transition:all .18s}
+  .kpi:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
+  .kpi.good{border-top-color:var(--success)}
+  .kpi.bad{border-top-color:var(--danger)}
+  .kpi.accent{border-top-color:var(--secondary)}
+  .k-label{display:block;font-family:var(--f-head);font-size:8.5px;font-weight:600;
+           letter-spacing:.9px;text-transform:uppercase;color:var(--tertiary);line-height:1.3}
+  .k-value{display:block;font-family:var(--f-head);font-size:23px;font-weight:800;
+           color:var(--ink);line-height:1.1;margin-top:2px}
+  .k-value i{font-style:normal;font-size:13px;color:var(--tertiary)}
+  .kpi.good .k-value{color:var(--success)}
+  .kpi.bad .k-value{color:var(--danger)}
+  .kpi.accent .k-value{color:var(--primary)}
+  .k-note{display:block;font-size:10px;color:var(--body-text);margin-top:1px}
+
+  /* ═══════ Panels ═══════ */
+  .panel{background:var(--white);box-shadow:var(--shadow-sm);padding:12px 14px;
+         display:flex;flex-direction:column;min-height:0}
+  .p-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;
+          margin-bottom:8px;flex-shrink:0}
+  .p-head.compact{align-items:center}
+  .p-head h3{font-family:var(--f-head);font-size:13px;font-weight:600;color:var(--ink);margin:0}
+  .p-desc{font-size:10.5px;color:var(--body-text);margin-top:1px}
+  .p-tools{display:flex;gap:5px;align-items:center;flex-shrink:0}
+  .icon-btn{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;
+            border:1px solid var(--border);background:var(--white);color:var(--tertiary);
+            font-size:12px;line-height:1;cursor:pointer;text-decoration:none;transition:all .18s}
+  .icon-btn:hover{background:var(--primary);border-color:var(--primary);color:#fff}
+  .seg{display:inline-flex;border:1px solid var(--border)}
+  .seg button{width:24px;height:24px;border:0;background:var(--white);color:var(--tertiary);
+              font-size:11px;cursor:pointer}
+  .seg button.on{background:var(--primary);color:#fff}
+
+  /* ═══════ Map ═══════ */
+  #cok-map{flex:1;min-height:200px;width:100%;background:var(--canvas)}
+  .map-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .leaflet-container{z-index:1}
+  .leaflet-popup-content-wrapper{border-radius:0;box-shadow:var(--shadow)}
+  .leaflet-popup-tip{box-shadow:none}
+  .leaflet-popup-content a{color:var(--primary);font-weight:600}
+  .leaflet-popup-content{font-family:var(--f-body);font-size:12.5px;margin:11px 13px}
+  .leaflet-popup-content b{font-family:var(--f-head);display:block;font-size:13.5px;color:var(--ink)}
+
+  .band-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);
+            margin-top:10px;flex-shrink:0}
+  .band{background:var(--white);padding:8px 6px;text-align:center;border-top:3px solid var(--c);
+        text-decoration:none;transition:background .18s}
+  .band:hover{background:var(--canvas)}
+  .band b{display:block;font-family:var(--f-head);font-size:19px;font-weight:800;color:var(--c);line-height:1}
+  .band span{display:block;font-family:var(--f-head);font-size:8.5px;font-weight:600;
+             letter-spacing:.4px;text-transform:uppercase;color:var(--tertiary);margin-top:2px}
+
+  /* ═══════ Full‑screen panels (unified) ═══════ */
+  body.map-open .map-panel,
+  body.fullscreen-siting #panel-siting,
+  body.fullscreen-ops #panel-ops,
+  body.fullscreen-criteria-list #panel-criteria-list,
+  body.fullscreen-criteria-chart #panel-criteria-chart {
+    position: fixed;
+    inset: 0;
+    z-index: 400;
+    margin: 0;
+    padding: 14px 18px;
+    background: var(--white);
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  /* Hide other panels when one is full‑screen */
+  body.fullscreen-siting .main-grid > :not(#panel-siting),
+  body.fullscreen-ops .main-grid > :not(#panel-ops),
+  body.fullscreen-criteria-list .main-grid > :not(#panel-criteria-list),
+  body.fullscreen-criteria-chart .main-grid > :not(#panel-criteria-chart),
+  body.map-open .main-grid > :not(.map-panel) {
+    display: none;
+  }
+
+  /* Larger charts in full‑screen */
+  body.fullscreen-siting #panel-siting .gauge,
+  body.fullscreen-ops #panel-ops .gauge {
+    min-height: 200px;
+  }
+  body.fullscreen-criteria-chart #panel-criteria-chart .chart-box {
+    min-height: 300px;
+  }
+  body.fullscreen-criteria-list #panel-criteria-list .scroller {
+    min-height: 300px;
+  }
+
+  /* ═══════ Modal overlay ═══════ */
+  #page-overlay {
+    background: var(--white);
+    box-shadow: 0 0 40px rgba(0,0,0,0.3);
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+  /* ═══════ Gauges ═══════ */
+  .gauge{position:relative;flex:1;min-height:96px}
+  .gauge-centre{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+                pointer-events:none;padding-top:18px}
+  .gauge-centre b{font-family:var(--f-head);font-size:27px;font-weight:800;color:var(--ink);line-height:1}
+  .gauge-centre i{font-style:normal;font-size:14px;color:var(--tertiary)}
+  .g-note{font-size:10px;color:var(--tertiary);text-align:center;flex-shrink:0;margin-top:4px}
+
+  /* ═══════ Criteria list ═══════ */
+  .scroller{flex:1;overflow-y:auto;min-height:0;scroll-behavior:smooth}
+  .scroller::-webkit-scrollbar{width:5px}
+  .scroller::-webkit-scrollbar-thumb{background:var(--border)}
+  .crit{display:grid;grid-template-columns:30px 1fr 38px;gap:9px;align-items:center;
+        padding:6px 2px;border-bottom:1px solid var(--border);text-decoration:none;transition:background .15s}
+  .crit:last-child{border-bottom:none}
+  .crit:hover{background:var(--canvas)}
+  .c-n{font-family:var(--f-head);font-size:15px;font-weight:800;color:var(--danger);text-align:center}
+  .c-label{font-size:11.5px;color:var(--ink);line-height:1.35;margin-bottom:3px}
+  .c-track{height:4px;background:var(--canvas);overflow:hidden}
+  .c-fill{height:100%;background:var(--danger)}
+  .c-pct{font-family:var(--f-head);font-size:11px;font-weight:700;color:var(--body-text);text-align:right}
+
+  .chart-box{flex:1;min-height:0;position:relative}
+
+  /* ═══════ Layout ═══════ */
+  .main-grid{display:grid;gap:12px;grid-template-columns:1fr}
+  .main-grid .panel{min-height:220px}
+
+  @media(min-width:700px){
+    .kpi-row{grid-template-columns:repeat(3,1fr)}
+    .main-grid{grid-template-columns:repeat(2,1fr)}
+    .map-panel{grid-column:1 / -1;order:-1;min-height:320px}
+  }
+
+  @media(min-width:1100px){
+    .kpi-row{grid-template-columns:repeat(6,1fr)}
+    .main-grid{
+      grid-template-columns:1fr 2fr 1fr;
+      grid-template-rows:1fr 1fr;
+      grid-template-areas:
+        "siting   map  ops"
+        "analysis map  criteria";
+      height:calc(100vh - var(--topbar-h) - 218px);
+      min-height:420px;
+    }
+    .map-panel{grid-area:map;order:0;min-height:0}
+    .area-siting{grid-area:siting;min-height:0}
+    .area-ops{grid-area:ops;min-height:0}
+    .area-analysis{grid-area:analysis;min-height:0}
+    .area-criteria{grid-area:criteria;min-height:0}
+    .main-grid .panel{min-height:0}
+  }
+
+  @media(min-width:1600px){
+    .container{max-width:1680px}
+    .main-grid{grid-template-columns:1fr 2.3fr 1fr}
+    .k-value{font-size:26px}
+  }
+
+  @media(max-width:699px){
+    .main-grid .panel{min-height:260px}
+    .band-row{grid-template-columns:repeat(2,1fr)}
+  }
+</style>
+@endpush

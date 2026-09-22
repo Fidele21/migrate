@@ -1,0 +1,370 @@
+@extends('layouts.app')
+@section('title', 'Letter — ' . $letter->title)
+
+@section('content')
+
+@php
+  $cfg  = config('letters');
+  $type = $cfg['types'][$letter->letter_type] ?? $cfg['types']['enforcement'];
+  $e    = $inspection?->entity;
+  $D    = \App\Models\Document::class;
+
+  $stages = [
+    ['key' => $D::DRAFT,            'label' => 'Draft',           'who' => 'Inspector'],
+    ['key' => $D::PENDING_DIRECTOR, 'label' => 'District review', 'who' => 'Director of Inspection'],
+    ['key' => $D::PENDING_SENIOR,   'label' => 'Central review',  'who' => 'Senior Inspector'],
+    ['key' => $D::PENDING_CHIEF,    'label' => 'Signature',       'who' => 'Chief Inspector'],
+    ['key' => $D::APPROVED,         'label' => 'Registry',        'who' => 'Secretary'],
+    ['key' => $D::ISSUED,           'label' => 'Issued',          'who' => 'Served'],
+  ];
+
+  $order = array_column($stages, 'key');
+  $now   = array_search($letter->status, $order, true);
+  if ($now === false) { $now = 0; }
+
+  $failed = $inspection?->answers->where('status', 'no')
+      ->map(fn ($a) => $a->item?->label)->filter()->values() ?? collect();
+
+  $sub = function (string $text) use ($letter, $inspection, $e, $cfg, $type) {
+      if (! $inspection || ! $e) { return $text; }
+      return strtr($text, [
+          ':authority'       => $cfg['authority'][$inspection->type_code] ?? $cfg['authority']['building'],
+          ':inspection_date' => $inspection->inspection_date->translatedFormat('j F Y'),
+          ':premises'        => mb_strtoupper($e->name),
+          ':sector'          => $e->sector,
+          ':district'        => $e->district,
+          ':upi'             => $e->upis->first()->upi ?? $e->upi ?? '—',
+          ':deadline'        => $letter->deadline_days ?? $type['deadline'],
+          ':prior_ref'       => $letter->prior_reference ?? '—',
+          ':prior_date'      => $letter->prior_date?->format('d/m/Y') ?? '—',
+          ':reply_date'      => $letter->reply_date?->format('d/m/Y') ?? '—',
+      ]);
+  };
+/* The signing role, not a person. Who holds it changes; the post does
+     not. If no active holder exists the letter still renders — an empty
+     signature block is a visible problem, a blank page is not. */
+  $signatory = \App\Models\User::whereHas('roles',
+        fn ($q) => $q->where('name', $cfg['signatory']['role'] ?? 'Chief Inspector'))
+      ->where('is_active', true)
+      ->first();
+  $lastMove  = $letter->transitionLog->last();
+@endphp
+
+{{-- ══════════ Header ══════════ --}}
+<div class="page-head no-print">
+  <div>
+    <div class="crumb">
+      {{ $type['name'] }} &middot; {{ $type['name_rw'] }}
+      @if($letter->case_reference) &middot; Case {{ $letter->case_reference }} @endif
+    </div>
+    <h2>{{ $letter->title }}</h2>
+    <p>
+      @if($letter->reference_number)
+        Ref N<sup>o</sup> {{ $letter->reference_number }}
+      @else
+        Reference assigned by the registry after signature
+      @endif
+      &middot; drafted by {{ $letter->creator?->name }}
+      @if($letter->deadline_date) &middot; deadline {{ $letter->deadline_date->format('j F Y') }} @endif
+    </p>
+  </div>
+
+  <div class="head-actions">
+    @if($letter->isEditable() && auth()->user()->can('update', $letter))
+      <a href="{{ route('editor.edit', $letter) }}" class="btn btn-primary">Edit</a>
+    @endif
+
+    <a href="{{ route('letter.review', $letter) }}" class="btn btn-primary">Review &amp; Submit</a>
+    <a href="{{ route('letter.word', $letter) }}" class="btn btn-success">Download Word</a>
+    <button onclick="window.print()" class="btn btn-ghost">Print</button>
+
+    @if($inspection)
+      <a href="{{ route('inspection.show', $inspection) }}" class="btn btn-ghost">Inspection</a>
+    @endif
+  </div>
+</div>
+
+@if(session('status'))
+  <div class="note no-print" style="border-left-color:var(--success);background:#E8F5E9">
+    <strong style="color:#2E7D32">Done</strong>{{ session('status') }}
+  </div>
+@endif
+
+{{-- ══════════ Where it stands ══════════ --}}
+@if($letter->isAwaitingReview())
+  <div class="note no-print" style="border-left-color:var(--warning);background:#FFF8E5">
+    <strong style="color:#8A6D00">With a reviewer</strong>
+    Submitted {{ $letter->submitted_at?->diffForHumans() }} and now
+    @switch($letter->status)
+      @case($D::PENDING_DIRECTOR) with the Director of Inspection. @break
+      @case($D::PENDING_SENIOR)   with the Senior Inspector at the CoK office. @break
+      @case($D::PENDING_CHIEF)    awaiting the Chief Inspector's signature. @break
+    @endswitch
+    It cannot be edited or resubmitted until it is approved or returned to you.
+  </div>
+
+@elseif($letter->status === $D::APPROVED)
+  <div class="note no-print" style="border-left-color:var(--success);background:#E8F5E9">
+    <strong style="color:#2E7D32">Signed</strong>
+    Approved and signed by the Chief Inspector on
+    {{ $letter->approved_at?->format('j F Y') }}. The content is frozen.
+    It is with the registry for a reference number, printing and dispatch.
+  </div>
+
+@elseif($letter->status === $D::ISSUED)
+  <div class="note no-print" style="border-left-color:var(--primary)">
+    <strong>Issued</strong>
+    Served on {{ $letter->dispatched_to ?: 'the owner' }}
+    @if($letter->dispatched_at) on {{ $letter->dispatched_at->format('j F Y') }}@endif.
+    A letter that has been served cannot be recalled or amended — a correction
+    requires a new letter on the same case.
+  </div>
+
+@elseif($letter->status === $D::RETURNED)
+  <div class="callout no-print">
+    <b>Returned to you</b>
+    <p style="font-size:14.5px">{{ $lastMove?->comment ?: 'No reason was recorded.' }}</p>
+    <small>Returned by {{ $lastMove?->actor?->name }},
+      {{ $lastMove?->created_at->diffForHumans() }}. Correct it and submit again.</small>
+  </div>
+
+@elseif($letter->status === $D::DRAFT)
+  <div class="note no-print">
+    <strong>Draft</strong>
+    Not yet submitted. Edit it freely, then use <em>Review &amp; Submit</em> to send it,
+    with its inspection report, to the Director of Inspection.
+  </div>
+@endif
+
+@if($letter->is_manual)
+  <div class="note no-print" style="border-left-color:var(--tertiary)">
+    <strong style="color:#A08B68">Edited manually</strong>
+    This letter has been edited and no longer updates from the inspection.
+    @if($letter->imported_from) Imported from {{ $letter->imported_from }}. @endif
+    Last edited {{ $letter->edited_at?->diffForHumans() }}.
+  </div>
+@endif
+
+{{-- ══════════ Approval chain ══════════ --}}
+<section class="no-print">
+  <h3>Approval chain</h3>
+  <div class="desc">Only the Chief Inspector signs enforcement correspondence</div>
+
+  <div class="chain">
+    @foreach($stages as $i => $s)
+      <div class="stg {{ $i < $now ? 'done' : ($i === $now ? 'here' : '') }}">
+        <div class="dot">{!! $i < $now ? '&#10003;' : $i + 1 !!}</div>
+        <div class="lbl">{{ $s['label'] }}</div>
+        <div class="who">{{ $s['who'] }}</div>
+      </div>
+      @if(! $loop->last)<div class="link {{ $i < $now ? 'done' : '' }}"></div>@endif
+    @endforeach
+  </div>
+</section>
+
+{{-- ══════════ The letter ══════════ --}}
+@include('partials.letterhead')
+<section class="paper">
+@if(filled($letter->content_html))
+  {!! $letter->content_html !!}
+@else
+  <div class="l-ref">Ref N<sup>o</sup>
+    {{ $letter->reference_number ?: str_repeat('.', 22) }}/{{ $cfg['reference']['registry_code'] }}/{{ ($letter->issued_at ?? now())->format('y') }}
+  </div>
+
+  <div class="l-date">Kigali, ku wa {{ $letter->issued_at?->format('d/m/Y') ?: str_repeat('.', 16) }}</div>
+
+  <div class="l-to">
+    <strong>{{ mb_strtoupper($e?->owner ?: $e?->name ?: '') }}</strong><br>
+    @if($e?->telephone)<strong>Tel: {{ $e->telephone }}</strong><br>@endif
+    <span class="u-bold">KIGALI</span>
+  </div>
+
+  <div class="l-subject"><span class="u-bold">Impamvu</span>: {{ $letter->subject }}</div>
+
+  <div class="l-salut">{{ $cfg['salutation'][$letter->salutation ?? 'company'] }}</div>
+
+  @foreach($type['body'] as $clause)
+    @if($clause === 'requirements' && $failed->count())
+      <p class="l-body">{{ $sub($cfg['clauses']['requirements']) }}</p>
+      <ol class="l-reqs">
+        @foreach($failed as $label)<li>{{ rtrim($label, '. ') }};</li>@endforeach
+      </ol>
+    @else
+      <p class="l-body">{{ $sub($cfg['clauses'][$clause] ?? '') }}</p>
+    @endif
+  @endforeach
+
+  @if($letter->body_html)
+    <p class="l-body">{!! nl2br(e(strip_tags($letter->body_html))) !!}</p>
+  @endif
+
+  <div class="l-closing">{{ $cfg['closing'] }}</div>
+
+  <div class="l-sig">
+    @if($signatory?->signature_path && $letter->signatures->count())
+      <img src="{{ Storage::disk('public')->url($signatory->signature_path) }}"
+           alt="Signature" class="sig-img">
+    @endif
+    <strong>{{ $signatory?->name ?? '' }}</strong><br>
+    <strong>{{ $cfg['signatory']['title'] }}</strong>
+    @if($letter->signatures->count())
+      <div class="signed">Signed {{ $letter->signatures->first()->signed_at->format('j F Y, H:i') }}</div>
+    @endif
+  </div>
+
+  <div class="l-copies">
+    <span class="u-bold">Bimenyeshejwe:</span>
+    @foreach($cfg['copies'] as $line)
+      <div>- {{ strtr($line, [':district' => $e?->district ?? '']) }}</div>
+    @endforeach
+  </div>
+
+  <div class="u-bold" style="margin-top:22px">KIGALI</div>
+@endif
+</section>
+
+{{-- ══════════ Registry ══════════ --}}
+@can('letter.reference')
+<section class="no-print">
+  <h3>Registry and dispatch</h3>
+  <div class="desc">Reference, printing, stamping and delivery to the owner</div>
+  <div class="tbl-wrap">
+    <table>
+      <tbody>
+        <tr>
+          <td class="k">Reference assigned</td>
+          <td>{{ $letter->reference_number ?: 'Not yet assigned' }}
+            @if($letter->referenced_at)<br><span class="mini">{{ $letter->referenced_at->format('j M Y, H:i') }}</span>@endif</td>
+        </tr>
+        <tr>
+          <td class="k">Printed</td>
+          <td>{{ $letter->printed_at?->format('j M Y, H:i') ?: 'Not yet printed' }}</td>
+        </tr>
+        <tr>
+          <td class="k">Stamped copy</td>
+          <td>
+            @if($letter->scan_path)
+              <a href="{{ Storage::disk('public')->url($letter->scan_path) }}" target="_blank" class="pill good">View</a>
+            @else Not yet uploaded @endif
+          </td>
+        </tr>
+        <tr>
+          <td class="k">Dispatched</td>
+          <td>{{ $letter->dispatched_at?->format('j M Y, H:i') ?: 'Not yet dispatched' }}
+            @if($letter->dispatched_to)<br><span class="mini">{{ $letter->dispatched_to }}</span>@endif</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  @if($letter->status === $D::APPROVED)
+    <div style="margin-top:16px">
+      <a href="{{ route('secretary.desk') }}" class="btn btn-primary">Open the Registry</a>
+    </div>
+  @endif
+</section>
+@endcan
+
+{{-- ══════════ History ══════════ --}}
+@if($letter->transitionLog->count())
+<section class="no-print">
+  <h3>History</h3>
+  <div class="desc">Every movement of this letter, recorded permanently</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>When</th><th>Who</th><th>Action</th><th>Comment</th></tr></thead>
+      <tbody>
+        @foreach($letter->transitionLog as $t)
+          <tr>
+            <td style="white-space:nowrap;font-size:12.5px">{{ $t->created_at->format('j M Y, H:i') }}</td>
+            <td>{{ $t->actor?->name }}<br><span class="mini">{{ $t->actor_role }}</span></td>
+            <td><span class="pill fair">{{ Str::headline($t->to_status) }}</span></td>
+            <td style="font-size:12.5px">{{ $t->comment ?: '—' }}</td>
+          </tr>
+        @endforeach
+      </tbody>
+    </table>
+  </div>
+
+  @if($letter->signatures->count())
+    <h3 style="margin-top:28px">Signature</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Signatory</th><th>Role</th><th>Signed</th><th>Integrity</th></tr></thead>
+        <tbody>
+          @foreach($letter->signatures as $s)
+            <tr>
+              <td><strong>{{ $s->signer_name }}</strong></td>
+              <td>{{ $s->signer_role }}</td>
+              <td style="font-size:12.5px">{{ $s->signed_at->format('j M Y, H:i') }}</td>
+              <td>
+                @if($s->isIntact())
+                  <span class="pill good">Unaltered since signing</span>
+                @else
+                  <span class="pill poor">Content has changed</span>
+                @endif
+              </td>
+            </tr>
+          @endforeach
+        </tbody>
+      </table>
+    </div>
+  @endif
+</section>
+@endif
+
+
+
+@endsection
+
+@push('styles')
+<style>
+  /* ---- Chain ---- */
+  .chain{display:flex;align-items:flex-start;flex-wrap:wrap}
+  .stg{text-align:center;flex:1;min-width:96px}
+  .dot{width:38px;height:38px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;
+       background:var(--canvas);color:var(--tertiary);font-family:var(--f-head);font-weight:700;
+       font-size:14px;border:2px solid var(--border)}
+  .stg.done .dot{background:var(--success);border-color:var(--success);color:#fff}
+  .stg.here .dot{background:var(--primary);border-color:var(--primary);color:#fff;
+                 box-shadow:0 0 0 5px rgba(52,168,219,.18)}
+  .stg .lbl{font-family:var(--f-head);font-size:12.5px;font-weight:600;color:var(--ink)}
+  .stg.here .lbl{color:var(--primary)}
+  .stg .who{font-size:11px;color:var(--tertiary);margin-top:2px}
+  .link{flex:0 0 26px;height:2px;background:var(--border);margin-top:19px}
+  .link.done{background:var(--success)}
+
+  /* ---- Letter ---- */
+  .paper{font-family:"Times New Roman",serif;font-size:15px;line-height:1.7;
+         padding:52px 58px;color:#000;max-width:860px;margin:0 auto}
+  .l-ref{margin-bottom:22px}
+  .l-date{text-align:right;margin-bottom:26px}
+  .l-to{margin-bottom:22px;line-height:1.6}
+  .l-subject{margin-bottom:20px}
+  .l-salut{margin-bottom:18px}
+  .l-body{text-align:justify;margin-bottom:16px}
+  ol.l-reqs{margin:0 0 16px 28px;line-height:1.9}
+  .l-closing{margin:22px 0 40px}
+  .l-sig{margin-bottom:34px;line-height:1.5}
+  .sig-img{display:block;height:56px;margin-bottom:4px}
+  .l-copies div{margin-top:5px}
+  .u-bold{font-weight:bold;text-decoration:underline}
+  .signed{font-family:var(--f-head);font-size:11px;color:var(--success);margin-top:8px;
+          font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+
+  td.k{color:var(--tertiary);width:32%;font-family:var(--f-head);font-size:11.5px;
+       text-transform:uppercase;letter-spacing:.5px}
+  .mini{font-size:11.5px;color:var(--tertiary)}
+
+  @media print{
+    .no-print,.topbar,.sidebar,.backdrop{display:none!important}
+    .content{padding:0}
+    .paper{box-shadow:none;padding:0;max-width:100%}
+  }
+  @media(max-width:760px){
+    .paper{padding:24px 18px;font-size:14px}
+    .link{display:none}
+    .stg{min-width:80px;margin-bottom:14px}
+  }
+</style>
+@endpush

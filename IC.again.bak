@@ -1,0 +1,677 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\ChecklistTemplate;
+use App\Models\Entity;
+use App\Models\EntityUpi;
+use App\Models\Inspection;
+use App\Models\InspectionAnswer;
+use App\Models\InspectionPhoto;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+
+/**
+ * Recording, editing and issuing inspections.
+ *
+ * A draft may be saved part-finished — an inspector often has to stop
+ * and return. Completing an inspection requires every checklist item to
+ * carry an answer, because an unanswered item is excluded from both the
+ * earned and the possible total, which shifts the compliance percentage
+ * rather than simply lowering it.
+ */
+class InspectionController extends Controller
+{
+    private const MAX_PHOTOS = 3;
+
+    /* ==============================================================
+       Drafts
+       ============================================================== */
+
+    /**
+     * Inspections not yet completed.
+     *
+     * An inspector sees their own; anyone with district or city-wide
+     * viewing rights sees the drafts within their scope, so a supervisor
+     * can tell what is outstanding.
+     */
+    public function drafts(Request $request)
+    {
+        $user = auth()->user();
+
+        $query = Inspection::with(['entity', 'inspector'])
+            ->where('status', 'draft')
+            ->orderByDesc('updated_at');
+
+        if ($user->can('inspection.view.all')) {
+            // everything
+        } elseif ($user->can('inspection.view.district')) {
+            $query->where('district_id', $user->district_id);
+        } else {
+            $query->where('inspector_id', $user->id);
+        }
+
+        if ($code = $request->query('type')) {
+            $query->where('type_code', $code);
+        }
+
+        return view('inspection.drafts', [
+            'drafts' => $query->get(),
+            'scope'  => $user->can('inspection.view.all')
+                ? 'All districts'
+                : ($user->can('inspection.view.district')
+                    ? ($user->district?->name ?? 'Your district')
+                    : 'Your inspections'),
+        ]);
+    }
+
+    /* ==============================================================
+       Showing the form
+       ============================================================== */
+
+    public function create(Request $request, string $code)
+    {
+        $this->authorizeAbility('inspection.create');
+
+        $type  = InspectionTypeController::resolve($code);
+        $stage = $request->input('stage');
+
+        if ($code !== 'construction') {
+            $stage = null;
+        }
+
+        if ($code === 'construction' &&
+            ! in_array($stage, ['substructure', 'superstructure'], true)) {
+            abort(422, 'A construction stage is required: substructure or superstructure.');
+        }
+
+        $template = ChecklistTemplate::current($code, $stage);
+        
+        /* Both checklists, because the officer chooses the stage on the
+           form. Rendering one and reloading on change would discard
+           whatever had already been answered. */
+        $templates = $code === 'construction'
+            ? [
+                'Substructure'   => ChecklistTemplate::current($code, 'substructure'),
+                'Superstructure' => ChecklistTemplate::current($code, 'superstructure'),
+              ]
+            : ['' => ChecklistTemplate::current($code, $stage)];
+
+        if (! $template) {
+            return view('inspection.no-template', compact('type'));
+        }
+
+        $entity = $request->filled('entity')
+            ? Entity::with('upis')->find($request->integer('entity'))
+            : null;
+
+        return view('inspection.form', [
+            'type'       => $type,
+            'stage'      => $stage,          // <-- passed to the view
+            'template'   => $template->load('sections.items'),
+            'entity'     => $entity,
+            'inspection' => null,
+            'answers'    => [],
+            'previous'   => null,
+            'visitType'  => 'new',
+            'action'     => route('inspection.store', $code),
+        ]);
+    }
+
+    public function followUp(string $code, Entity $entity)
+    {
+        $this->authorizeAbility('inspection.followup');
+
+        $type  = InspectionTypeController::resolve($code);
+        $stage = request()->input('stage');
+
+        if ($code !== 'construction') {
+            $stage = null;
+        }
+
+        if ($code === 'construction' && ! in_array($stage, ['substructure', 'superstructure'], true)) {
+            abort(422, 'A construction stage is required: substructure or superstructure.');
+        }
+
+        $template = ChecklistTemplate::current($code, $stage);
+
+        if (! $template) {
+            return view('inspection.no-template', compact('type'));
+        }
+
+        $previous = $entity->inspections()->where('status', 'completed')->first();
+
+        $answers = $previous
+            ? $previous->answers->keyBy('item_id')
+                ->map(fn ($a) => ['status' => $a->status, 'comment' => $a->comment])->all()
+            : [];
+
+        return view('inspection.form', [
+            'type'       => $type,
+            'stage'      => $stage,          // <-- passed to the view
+            'template'   => $template->load('sections.items'),
+            'entity'     => $entity->load('upis'),
+            'inspection' => null,
+            'answers'    => $answers,
+            'previous'   => $previous,
+            'visitType'  => 'followup',
+            'action'     => route('inspection.store', $code),
+        ]);
+    }
+
+    public function edit(Inspection $inspection)
+    {
+        $this->authorizeEdit($inspection);
+
+        $inspection->load(['entity.upis', 'template.sections.items', 'answers', 'photos', 'team']);
+        $inspection->load('faults.fault');
+        return view('inspection.form', [
+            'type'       => InspectionTypeController::resolve($inspection->type_code),
+            'template'   => $inspection->template,
+            'entity'     => $inspection->entity,
+            'inspection' => $inspection,
+            'answers'    => $inspection->answers->keyBy('item_id')
+                                ->map(fn ($a) => ['status' => $a->status, 'comment' => $a->comment])->all(),
+            'previous'   => $inspection->previous,
+            'visitType'  => $inspection->visit_type,
+            'action'     => route('inspection.update', $inspection),
+        ]);
+    }
+
+    /* ==============================================================
+       Saving
+       ============================================================== */
+
+    public function store(Request $request, string $code)
+    {
+        $this->authorizeAbility('inspection.create');
+
+        $data  = $this->validated($request);
+        $stage = $data['stage'] ?? null;
+
+        if ($code !== 'construction') {
+            $stage = null;
+        }
+
+        if ($code === 'construction' && ! in_array($stage, ['substructure', 'superstructure'], true)) {
+            abort(422, 'A construction stage is required: substructure or superstructure.');
+        }
+
+        $template = ChecklistTemplate::current($code, $stage);
+        abort_unless($template, 404, 'No published checklist for this category and stage.');
+
+        $this->requireEveryItemAnswered($request, $template);
+
+        return DB::transaction(function () use ($request, $data, $code, $stage, $template) {
+
+            $upis = $this->cleanUpis($request->input('upis', []));
+
+            $entity = Entity::findOrCreateFrom([
+                'type_code' => $code,
+                'name'      => $data['name'],
+                'upi'       => $upis->first(),
+                'owner'     => $data['owner'],
+                'telephone' => $data['telephone'],
+                'email'     => $data['email'],
+                'use_type'  => $data['use_type'],
+                'zoning'    => $data['zoning'],
+                'district'  => $data['district'],
+                'sector'    => $data['sector'],
+                'cell'      => $data['cell'],
+                'latitude'  => $data['latitude']  ?? null,
+                'longitude' => $data['longitude'] ?? null,
+            ]);
+
+            $this->saveUpis($entity, $upis);
+
+            // Clash check (unchanged)
+            $clash = Inspection::where('entity_id', $entity->id)
+                ->where('type_code', $code)
+                ->when($code === 'construction', function ($query) use ($stage) {
+                    $query->where('stage', $stage);
+                })
+                ->whereDate('inspection_date', $data['inspection_date'])
+                ->first();
+
+            if ($clash) {
+                if ($clash->status === 'draft' && $clash->conductedBy($request->user())) {
+                    return redirect()
+                        ->route('inspection.edit', $clash)
+                        ->with('warning',
+                            'You had already begun an inspection of ' . $entity->name
+                            . ' on ' . $clash->inspection_date->format('j F Y')
+                            . '. It has been opened here so you can finish it rather than start again.');
+                }
+
+                return redirect()
+                    ->route('inspection.show', $clash)
+                    ->with('warning',
+                        $entity->name . ' was already inspected on '
+                        . $clash->inspection_date->format('j F Y')
+                        . ' by ' . $clash->inspector_name
+                        . ($clash->status === 'completed'
+                            ? ', scoring ' . round((float) $clash->compliance, 1) . '%'
+                            : ' and is still in draft')
+                        . '. A premises may be inspected once a day for each category. '
+                        . 'If a further visit took place, record it under a different date.');
+            }
+
+            $inspection = Inspection::create([
+                'entity_id'              => $entity->id,
+                'template_id'            => $template->id,
+                'type_code'              => $code,
+                'stage'                  => $stage,
+                'inspection_date'        => $data['inspection_date'],
+                'visit_type'             => $request->input('visit_type') === 'followup' ? 'followup' : 'new',
+                'previous_inspection_id' => $request->integer('previous_inspection_id') ?: null,
+                'visit_number'           => $entity->inspections()->count() + 1,
+                'status'                 => $request->input('action') === 'complete' ? 'completed' : 'draft',
+                'inspector_id'           => auth()->id(),
+                'inspector_name'         => auth()->user()->name,
+                'district_id'            => auth()->user()->district_id,
+                'observations'           => $data['observations']    ?? null,
+                'recommendations'        => $data['recommendations'] ?? null,
+
+                /* The particulars of a construction site. Validated and
+                   fillable is not enough: this array names its fields, so
+                   anything absent from it is quietly discarded — which is
+                   how five inspections were recorded with no permit
+                   number and no building category. */
+                'permit_number'     => $data['permit_number']     ?? null,
+                'permit_expiry'     => $data['permit_expiry']     ?? null,
+                'contractor'        => $data['contractor']        ?? null,
+                'supervisor'        => $data['supervisor']        ?? null,
+                'building_status'   => $data['building_status']   ?? null,
+                'dwelling_unit'     => $data['dwelling_unit']     ?? null,
+                'has_physical_plan' => $data['has_physical_plan'] ?? null,
+                'building_category' => $data['building_category'] ?? null,
+                'on_main_corridor' => $data['on_main_corridor'] ?? null,
+                'corridor_road'    => $data['corridor_road']    ?? null,
+            ]);
+
+            $this->saveAnswers($inspection, $request->input('answers', []));
+            $this->saveFaults($request, $inspection);
+            $this->saveTeam($inspection, $request->input('team', []));
+            $this->savePhotos($inspection, $request);
+            $inspection->recalculate();
+
+            return redirect()->route('inspection.show', $inspection)
+                ->with('status', 'Inspection saved for ' . $entity->name . '.');
+        });
+    }
+
+    public function update(Request $request, Inspection $inspection)
+    {
+        $this->authorizeEdit($inspection);
+
+        $data = $this->validated($request);
+        $this->requireEveryItemAnswered($request, $inspection->template);
+
+        return DB::transaction(function () use ($request, $data, $inspection) {
+
+            $upis   = $this->cleanUpis($request->input('upis', []));
+            $entity = $inspection->entity;
+
+            $entity->fill([
+                'name'      => $data['name'],
+                'upi'       => $upis->first(),
+                'owner'     => $data['owner'],
+                'telephone' => $data['telephone'],
+                'email'     => $data['email'],
+                'use_type'  => $data['use_type'],
+                'zoning'    => $data['zoning'],
+                'district'  => $data['district'],
+                'sector'    => $data['sector'],
+                'cell'      => $data['cell'],
+                'latitude'  => $data['latitude']  ?? $entity->latitude,
+                'longitude' => $data['longitude'] ?? $entity->longitude,
+                'on_main_corridor' => $data['on_main_corridor'] ?? $inspection->on_main_corridor,
+                'corridor_road'    => $data['corridor_road']    ?? $inspection->corridor_road,
+            ])->save();
+
+            $this->saveUpis($entity, $upis);
+
+            $inspection->fill([
+                'inspection_date' => $data['inspection_date'],
+                'observations'    => $data['observations']    ?? null,
+                'recommendations' => $data['recommendations'] ?? null,
+                'status'          => $request->input('action') === 'complete' ? 'completed' : $inspection->status,
+            ])->save();
+
+            $this->saveAnswers($inspection, $request->input('answers', []));
+            $this->saveTeam($inspection, $request->input('team', []));
+            $this->savePhotos($inspection, $request);
+            $inspection->recalculate();
+
+            return redirect()->route('inspection.show', $inspection)
+                ->with('status', 'Inspection updated.');
+        });
+    }
+
+    /* ==============================================================
+       Viewing and export
+       ============================================================== */
+
+    public function show(Inspection $inspection)
+    {
+        $inspection->load([
+            'entity.upis', 'template.sections.items', 'answers', 'team', 'inspector', 'photos',
+        ]);
+
+        $history = $inspection->entity->inspections;
+        $prev    = $history->firstWhere('visit_number', $inspection->visit_number - 1);
+
+        return view('inspection.show', [
+            'inspection'      => $inspection,
+            'answers'         => $inspection->answers->keyBy('item_id'),
+            'canEdit'         => $this->canEdit($inspection),
+            'history'         => $history,
+            'previousCompare' => $prev
+                ? (float) $inspection->compliance - (float) $prev->compliance
+                : null,
+        ]);
+    }
+
+    /**
+     * Download the report as a Word document.
+     *
+     * Produced as Word-flavoured HTML rather than through a library, so
+     * it needs no additional dependency on a host where proc_open is
+     * disabled. Word opens it, renders it, and allows it to be edited
+     * and re-saved as .docx.
+     */
+    public function word(Inspection $inspection)
+    {
+        $inspection->load(['entity.upis', 'template.sections.items', 'answers', 'team', 'photos']);
+
+        $filename = 'Inspection-Report-'
+            . preg_replace('/[^A-Za-z0-9]+/', '-', $inspection->entity->name) . '-'
+            . $inspection->inspection_date->format('Y-m-d') . '.doc';
+
+        $director = \App\Models\User::role('Director of Inspection')
+            ->where('district_id', $inspection->district_id)
+            ->where('is_active', true)
+            ->first();
+            
+        $inspection->load('faults.fault');
+
+        $html = view('inspection.report-word', [
+            'inspection' => $inspection,
+            'answers'    => $inspection->answers->keyBy('item_id'),
+            'history'    => $inspection->entity->inspections,
+            'director'   => $director,
+        ])->render();
+
+        return response($html, 200, [
+            'Content-Type'        => 'application/msword; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+    
+        /**
+     * Faults found at the inspection.
+     *
+     * The amount and the action are copied from the schedule as it stands
+     * today. The schedule may be amended; what was found and what was set
+     * against it on the day must not change with it.
+     *
+     * Nothing here raises a fine. These are findings, like every other
+     * finding on this platform: the consequence follows the sealed report
+     * and the letter.
+     */
+    private function saveFaults(Request $request, Inspection $inspection): void
+    {
+        if ($inspection->type_code !== 'construction') {
+            return;
+        }
+
+        $submitted = collect($request->input('faults', []))
+            ->filter(fn ($f) => ! empty($f['selected']));
+
+        $inspection->faults()->whereNotIn('fault_id', $submitted->keys())->delete();
+
+        foreach ($submitted as $faultId => $f) {
+            $fault = \App\Models\Fault::with('sanctions')->find($faultId);
+            if (! $fault) continue;
+
+            /* Where the sanction turns on a road class or a protected
+               area the officer chooses it; otherwise it follows the
+               building category recorded above. */
+            $scope = $f['scope'] ?? $inspection->building_category;
+
+            $sanction = $fault->sanctionFor($scope);
+
+            $inspection->faults()->updateOrCreate(
+                ['fault_id' => $fault->id],
+                [
+                    'fault_sanction_id' => $sanction?->id,
+                    'scope'             => $sanction?->scope ?? $scope,
+                    'amount'            => $sanction?->amount,
+                    'action'            => $sanction?->action,
+                    'note'              => $f['note'] ?? null,
+                    'recorded_by'       => auth()->id(),
+                ]
+            );
+        }
+    }
+
+    /* ==============================================================
+       Validation
+       ============================================================== */
+
+    private function validated(Request $request): array
+    {
+        return $request->validate([
+            'name'            => ['required', 'string', 'max:200'],
+            'inspection_date' => ['required', 'date', 'before_or_equal:today'],
+            'stage'           => ['nullable', 'in:substructure,superstructure'],
+            'owner'           => ['required', 'string', 'max:160'],
+            'telephone'       => ['required', 'string', 'max:40'],
+            'email'           => ['required', 'email', 'max:180'],
+            'zoning'          => ['required', 'string', 'max:20'],
+            'use_type'        => ['required', 'string', 'max:120'],
+            'district'        => ['required', 'string', 'max:60'],
+            'sector'          => ['required', 'string', 'max:60'],
+            'cell'            => ['required', 'string', 'max:60'],
+
+            'latitude'  => ['nullable', 'numeric', 'between:-2.6,-1.4'],
+            'longitude' => ['nullable', 'numeric', 'between:29.4,30.7'],
+
+            'upis'            => ['required', 'array', 'min:1', 'max:6'],
+            'upis.*'          => ['nullable', 'regex:/^[1-5]\/\d{2}\/\d{2}\/\d{2}\/\d+(-\d+)?$/'],
+
+            'observations'    => ['nullable', 'string'],
+            'recommendations' => ['nullable', 'string'],
+            'permit_number'     => ['nullable', 'string', 'max:60'],
+            'permit_expiry'     => ['nullable', 'date'],
+            'contractor'        => ['nullable', 'string', 'max:255'],
+            'supervisor'        => ['nullable', 'string', 'max:255'],
+            'building_status'   => ['nullable', 'string', 'max:80'],
+            'dwelling_unit'     => ['nullable', 'string', 'max:80'],
+            'has_physical_plan' => ['nullable', 'boolean'],
+            'building_category' => ['nullable', 'string', 'max:80'],
+                        'faults'                => ['nullable', 'array'],
+            'faults.*.selected'     => ['nullable', 'in:1'],
+            'faults.*.scope'        => ['nullable', 'string', 'max:80'],
+            'faults.*.note'         => ['nullable', 'string', 'max:300'],
+            
+            'on_main_corridor' => ['nullable', 'boolean'],
+            'corridor_road'    => ['nullable', 'string', 'max:120'],
+
+            'team'            => ['nullable', 'array', 'max:8'],
+            'team.*.name'     => ['nullable', 'string', 'max:120'],
+            'team.*.position' => ['nullable', 'string', 'max:120'],
+            'team.*.institution' => ['nullable', 'string', 'max:160'],
+
+            'photos'          => ['nullable', 'array', 'max:' . self::MAX_PHOTOS],
+            'photos.*'        => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:10240'],
+        ], [
+            'upis.*.regex'   => 'Each parcel identifier must look like 1/02/05/03/4745.',
+            'email.required' => 'An email address is required — enforcement letters are sent to it.',
+            'photos.max'     => 'A maximum of three photographs may be attached.',
+            
+        ]);
+    }
+
+    /**
+     * Every checklist item must be answered before completion.
+     *
+     * The item IDs are flashed back to the session rather than listed in
+     * a message, so the form can mark each one in place and take the
+     * inspector straight to it. A list of item names in an error box is
+     * of little use when the checklist runs to ninety-one rows.
+     */
+    private function requireEveryItemAnswered(Request $request, ChecklistTemplate $template): void
+    {
+        if ($request->input('action') !== 'complete') {
+            return;
+        }
+
+        $answers = $request->input('answers', []);
+        $missing = [];
+
+        foreach ($template->load('sections.items')->sections as $section) {
+            foreach ($section->items as $item) {
+                $status = $answers[$item->id]['status'] ?? null;
+                if (! in_array($status, ['yes', 'no', 'na'], true)) {
+                    $missing[] = $item->id;
+                }
+            }
+        }
+
+        if (empty($missing)) {
+            return;
+        }
+
+        session()->flash('missing_items', $missing);
+
+        throw ValidationException::withMessages([
+            'checklist' => count($missing) === 1
+                ? 'One checklist item still needs an answer. It is marked below.'
+                : count($missing) . ' checklist items still need an answer. They are marked below.',
+        ]);
+    }
+
+    /* ==============================================================
+       Persistence helpers
+       ============================================================== */
+
+    private function cleanUpis(array $upis)
+    {
+        return collect($upis)->map(fn ($u) => trim((string) $u))->filter()->unique()->values();
+    }
+
+    private function saveUpis(Entity $entity, $upis): void
+    {
+        if ($upis->isEmpty()) {
+            return;
+        }
+
+        $entity->upis()->whereNotIn('upi', $upis->all())->delete();
+
+        foreach ($upis as $i => $upi) {
+            EntityUpi::updateOrCreate(
+                ['entity_id' => $entity->id, 'upi' => $upi],
+                ['is_primary' => $i === 0]
+            );
+        }
+    }
+
+    private function saveAnswers(Inspection $inspection, array $answers): void
+    {
+        foreach ($answers as $itemId => $answer) {
+            $status = $answer['status'] ?? null;
+            if (! in_array($status, ['yes', 'no', 'na'], true)) {
+                $status = null;
+            }
+
+            InspectionAnswer::updateOrCreate(
+                ['inspection_id' => $inspection->id, 'item_id' => (int) $itemId],
+                ['status' => $status, 'comment' => $answer['comment'] ?? null]
+            );
+        }
+    }
+
+    /**
+     * The officers who conducted the site visit.
+     *
+     * Their names and positions form the signature block of the report,
+     * so the document is signed by the people who were actually present
+     * rather than by a generic title.
+     */
+    private function saveTeam(Inspection $inspection, array $team): void
+    {
+        $inspection->team()->delete();
+
+        foreach ($team as $i => $member) {
+            $name = trim((string) ($member['name'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+
+            \App\Models\InspectionTeamMember::create([
+                'inspection_id' => $inspection->id,
+                'name'          => $name,
+                'position'      => $member['position'] ?? null,
+                'institution'   => $member['institution'] ?? 'City of Kigali',
+                'is_lead'       => $i === 0,
+            ]);
+        }
+    }
+
+    private function savePhotos(Inspection $inspection, Request $request): void
+    {
+        foreach ((array) $request->input('remove_photos', []) as $id) {
+            $inspection->photos()->where('id', $id)->get()->each->delete();
+        }
+
+        $count = $inspection->photos()->count();
+
+        foreach ((array) $request->file('photos', []) as $file) {
+            if (! $file || $count >= self::MAX_PHOTOS) {
+                break;
+            }
+
+            $path = $file->store('inspections/' . $inspection->id, 'public');
+
+            InspectionPhoto::create([
+                'inspection_id' => $inspection->id,
+                'path'          => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'sort_order'    => $count,
+                'size_bytes'    => $file->getSize(),
+            ]);
+
+            $count++;
+        }
+    }
+
+    /* ==============================================================
+       Authorisation
+       ============================================================== */
+
+    private function canEdit(Inspection $inspection): bool
+    {
+        $user = auth()->user();
+
+        if (! $user->coversDistrict($inspection->district_id)) {
+            return false;
+        }
+        if ($user->can('inspection.edit.district')) {
+            return true;
+        }
+        return $user->can('inspection.edit.own') && $inspection->inspector_id === $user->id;
+    }
+
+    private function authorizeEdit(Inspection $inspection): void
+    {
+        abort_unless($this->canEdit($inspection), 403,
+            'You may only edit inspections you carried out, or those in your district.');
+    }
+
+    private function authorizeAbility(string $permission): void
+    {
+        abort_unless(auth()->user()->can($permission), 403);
+    }
+}

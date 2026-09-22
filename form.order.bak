@@ -1,0 +1,946 @@
+@extends('layouts.app')
+@section('title', $visitType === 'followup' ? 'Follow-up Inspection' : 'New Inspection')
+
+@section('content')
+
+@php
+  /* A desk review opens with no checklist: the kind of application
+     decides which one applies, and it is chosen on this form. */
+  $itemCount = $template?->sections->sum(fn($s) => $s->items->count()) ?? 0;
+  $existingUpis = $entity?->upis->pluck('upi')->all() ?? [];
+  if (empty($existingUpis)) { $existingUpis = ['']; }
+@endphp
+
+<div class="page-head">
+  <div>
+    <div class="crumb">{{ $type['group'] }} &middot; {{ $type['name'] }}</div>
+    <h2>{{ $inspection ? 'Edit Inspection' : ($visitType === 'followup' ? 'Follow-up Inspection' : 'New Inspection') }}</h2>
+    <p>
+      @if($visitType === 'followup' && $previous)
+        Carried forward from {{ $previous->inspection_date->format('j F Y') }} ({{ $previous->compliance }}%).
+        Record what has changed.
+      @else
+        <span id="tpl-name">
+          @if(count($templates ?? []) > 1)
+            Choose the status of the works to load the checklist
+          @else
+            @if($template)
+              {{ $template->name }} &middot; version {{ $template->version }} &middot; {{ $itemCount }} items
+            @else
+              Choose the kind of application below to load its checklist
+            @endif
+          @endif
+        </span>
+      @endif
+    </p>
+  </div>
+  <div class="head-actions">
+    <a href="{{ route('type.show', $type['code']) }}" class="btn btn-ghost">Cancel</a>
+  </div>
+</div>
+
+@if($errors->any())
+  <div class="callout">
+    <b>Please correct the following</b>
+    <p style="font-size:13.5px;font-weight:400">
+      @foreach($errors->all() as $e)&bull; {{ $e }}<br>@endforeach
+    </p>
+  </div>
+@endif
+
+<form method="post" action="{{ $action }}" id="inspection-form" enctype="multipart/form-data">
+  @csrf
+  @if($inspection)@method('PUT')@endif
+  <input type="hidden" name="visit_type" value="{{ $visitType }}">
+  @if($previous)<input type="hidden" name="previous_inspection_id" value="{{ $previous->id }}">@endif
+
+  {{-- ✅ FIX: include the stage so the controller knows which construction stage --}}
+  <input type="hidden" name="stage" value="{{ $stage ?? '' }}">
+
+  {{-- ═══════════ 1. PREMISES ═══════════ --}}
+  <div class="step">
+    <div class="step-bar"><span class="step-no">1</span> Premises Information</div>
+    <div class="step-body">
+
+      <div class="fgrid">
+        <div class="f2">
+          <label class="fl">Premises name <span class="req">*</span></label>
+          <input class="fi" name="name" required value="{{ old('name', $entity->name ?? '') }}">
+        </div>
+        <div>
+          <label class="fl">Date of inspection <span class="req">*</span></label>
+          <input class="fi" type="date" name="inspection_date" required max="{{ date('Y-m-d') }}"
+                 value="{{ old('inspection_date', optional($inspection)->inspection_date?->format('Y-m-d') ?? date('Y-m-d')) }}">
+        </div>
+        <div>
+          <label class="fl">Owner <span class="req">*</span></label>
+          <input class="fi" name="owner" required value="{{ old('owner', $entity->owner ?? '') }}">
+        </div>
+        <div>
+          <label class="fl">Telephone <span class="req">*</span></label>
+          <input class="fi" name="telephone" required placeholder="07XXXXXXXX"
+                 value="{{ old('telephone', $entity->telephone ?? '') }}">
+        </div>
+        <div>
+          <label class="fl">Email <span class="req">*</span></label>
+          <input class="fi" type="email" name="email" required
+                 value="{{ old('email', $entity->email ?? '') }}">
+          <div class="hint">Enforcement letters are dispatched to this address.</div>
+        </div>
+      </div>
+
+      {{-- ---- Parcels ---- --}}
+      <div class="sub-head">
+        Parcel identifiers <span class="req">*</span>
+        <span class="sub-note">A premises may span more than one parcel</span>
+      </div>
+
+      <div id="upi-list">
+        @foreach(old('upis', $existingUpis) as $i => $upi)
+          <div class="upi-row">
+            <input class="fi upi-input" name="upis[]" value="{{ $upi }}"
+                   placeholder="1/02/05/03/4745" {{ $i === 0 ? 'required' : '' }}
+                   pattern="[1-5]/[0-9]{2}/[0-9]{2}/[0-9]{2}/[0-9]+(-[0-9]+)?">
+            <button type="button" class="btn btn-ghost btn-sm upi-remove" title="Remove">&times;</button>
+          </div>
+        @endforeach
+      </div>
+      <div class="upi-tools">
+        <button type="button" id="upi-add" class="btn btn-ghost btn-sm">+ Add another parcel</button>
+        <span class="hint" id="upi-hint">Format: province / district / sector / cell / parcel. Kigali parcels begin with 1.</span>
+      </div>
+
+      {{-- ---- Zoning and use ---- --}}
+      <div class="fgrid" style="margin-top:18px">
+        <div>
+          <label class="fl">Zoning <span class="req">*</span></label>
+          <select class="fi" name="zoning" required>
+            <option value="">Select a zone</option>
+            @foreach(config('zoning') as $group => $codes)
+              <optgroup label="{{ $group }}">
+                @foreach($codes as $code => $label)
+                  <option value="{{ $code }}" @selected(old('zoning', $entity->zoning ?? '') === $code)>
+                    {{ $code }} &mdash; {{ $label }}
+                  </option>
+                @endforeach
+              </optgroup>
+            @endforeach
+          </select>
+        </div>
+        <div>
+          <label class="fl">Use <span class="req">*</span></label>
+          <input class="fi" name="use_type" required list="uses"
+                 value="{{ old('use_type', $entity->use_type ?? '') }}">
+          <datalist id="uses">
+            <option>Petrol station</option><option>Commercial building</option>
+            <option>Residential building</option><option>Mixed use</option>
+            <option>Industrial</option><option>Warehouse</option>
+            <option>School</option><option>Health facility</option>
+            <option>Hotel</option><option>Market</option>
+          </datalist>
+        </div>
+      </div>
+
+      {{-- ---- Location (district/sector/cell) ---- --}}
+      <div class="sub-head">Location <span class="req">*</span></div>
+
+      <div class="fgrid">
+        <div>
+          <label class="fl">District <span class="req">*</span></label>
+          <select class="fi" name="district" id="district" required>
+            <option value="">Select district</option>
+            @foreach(array_keys(config('kigali')) as $d)
+              <option value="{{ $d }}" @selected(old('district', $entity->district ?? auth()->user()->district?->name) === $d)>{{ $d }}</option>
+            @endforeach
+          </select>
+        </div>
+        <div>
+          <label class="fl">Sector <span class="req">*</span></label>
+          <select class="fi" name="sector" id="sector" required>
+            <option value="">Select sector</option>
+          </select>
+        </div>
+        <div>
+          <label class="fl">Cell <span class="req">*</span></label>
+          <select class="fi" name="cell" id="cell" required>
+            <option value="">Select cell</option>
+          </select>
+        </div>
+      </div>
+
+      {{-- ---- GPS coordinates (replaced block) ---- --}}
+      <div class="gps-block">
+        <label>Location</label>
+
+        <div class="gps-row">
+          <div class="gps-field">
+            <span>Latitude</span>
+            <input type="text" name="latitude" id="latitude" inputmode="decimal"
+                   placeholder="-1.9441" value="{{ old('latitude', $entity->latitude ?? '') }}">
+          </div>
+
+          <div class="gps-field">
+            <span>Longitude</span>
+            <input type="text" name="longitude" id="longitude" inputmode="decimal"
+                   placeholder="30.0619" value="{{ old('longitude', $entity->longitude ?? '') }}">
+          </div>
+
+          <button type="button" class="btn btn-ghost" id="gps-capture">Capture</button>
+        </div>
+
+        <div class="gps-note" id="gps-note">
+          Capture uses this device's position, or type the coordinates if you have them.
+        </div>
+      </div>
+
+    </div>
+  </div>
+  
+  @include('partials.construction-fields')
+  @include('partials.desk-review-fields')
+
+  {{-- ═══════════ 2. CHECKLIST ═══════════ --}}
+  <div class="step">
+    <div class="step-bar"><span class="step-no">2</span> Assessment Checklist</div>
+  </div>
+
+  <div class="progress-bar" id="progress-bar">
+    <div class="pb-left"><strong id="pb-done">0</strong> of <strong id="pb-total">{{ $itemCount }}</strong> answered</div>
+    <div class="pb-track"><div class="pb-fill" id="pb-fill"></div></div>
+    <div class="pb-right">
+      <span class="tally yes">Compliant <b id="t-yes">0</b></span>
+      <span class="tally no">Not compliant <b id="t-no">0</b></span>
+      <span class="tally na">N/A <b id="t-na">0</b></span>
+      <span class="score" id="t-score">&mdash;</span>
+    </div>
+  </div>
+  
+  
+
+  {{-- Both checklists are on the page. The officer chooses the stage
+       under Status of the works; reloading to fetch one would discard
+       whatever had already been answered. The set not in use is disabled
+       as well as hidden, because a hidden input still posts. --}}
+  @foreach(($templates ?? ['' => $template]) as $stageName => $tpl)
+    <div class="stage-set {{ $loop->first && count($templates ?? []) < 2 ? 'on' : '' }}"
+         data-stage="{{ $stageName }}"
+         @if(count($templates ?? []) > 1) style="display:none" @endif>
+
+  @foreach($tpl->sections as $section)
+    <section class="chk-section">
+      <div class="sec-head">
+        <div><span class="sec-no">{{ $section->section_number }}</span> {{ $section->title }}</div>
+        <span class="sec-count"><span class="sec-done">0</span>/{{ $section->items->count() }}</span>
+      </div>
+
+      @foreach($section->items as $item)
+        @php
+          $prior   = $answers[$item->id]['status'] ?? null;
+          $val     = old("answers.{$item->id}.status", $prior);
+          $cmt     = old("answers.{$item->id}.comment", $answers[$item->id]['comment'] ?? '');
+          $carried = $visitType === 'followup' && $prior !== null && ! $inspection;
+        @endphp
+        <div class="chk-item {{ $carried ? 'carried' : '' }}" data-weight="{{ $item->max_score }}">
+          <div class="ci-label">
+            {{ rtrim($item->label, '. ') }}
+            @if($item->max_score > 0)<span class="wt">{{ rtrim(rtrim(number_format((float) $item->max_score, 2), '0'), '.') }}</span>@endif
+            @if($carried)<span class="carried-tag">previous</span>@endif
+          </div>
+          <div class="ci-status">
+            @foreach(['yes' => 'Yes', 'no' => 'No', 'na' => 'N/A'] as $k => $lbl)
+              <label class="sbtn s-{{ $k }} {{ $val === $k ? 'on' : '' }}">
+                <input type="radio" name="answers[{{ $item->id }}][status]" value="{{ $k }}" {{ $val === $k ? 'checked' : '' }}>{{ $lbl }}
+              </label>
+            @endforeach
+            @if($item->is_prohibition)
+              <span class="prohibited">Prohibited — answer No to comply</span>
+            @endif
+          </div>
+          <div class="ci-comment">
+            <input class="fi sm" name="answers[{{ $item->id }}][comment]" placeholder="Comment (optional)" value="{{ $cmt }}">
+          </div>
+        </div>
+      @endforeach
+    </section>
+  @endforeach
+
+    </div>
+  @endforeach
+
+    @include('partials.faults-panel')
+
+  {{-- ═══════════ 3. PHOTOGRAPHS ═══════════ --}}
+  <div class="step">
+    <div class="step-bar"><span class="step-no">3</span> Photographs <span class="opt">Optional &middot; up to 3</span></div>
+    <div class="step-body">
+
+      @if($inspection && $inspection->photos->count())
+        <div class="photo-existing">
+          @foreach($inspection->photos as $p)
+            <div class="ph-thumb">
+              <img src="{{ $p->url() }}" alt="">
+              <label class="ph-del"><input type="checkbox" name="remove_photos[]" value="{{ $p->id }}"> Remove</label>
+            </div>
+          @endforeach
+        </div>
+      @endif
+
+      <div class="photo-drop" id="photo-drop">
+        <div class="pd-actions">
+          <label class="btn btn-primary">
+            Take Photo
+            <input type="file" name="photos[]" accept="image/*" capture="environment" multiple hidden class="photo-input">
+          </label>
+          <label class="btn btn-ghost">
+            Choose Files
+            <input type="file" name="photos[]" accept="image/*" multiple hidden class="photo-input">
+          </label>
+        </div>
+        <div class="pd-note">JPEG or PNG, up to 5 MB each. A maximum of three photographs per inspection.</div>
+        <div class="photo-preview" id="photo-preview"></div>
+      </div>
+
+    </div>
+  </div>
+
+  {{-- ═══════════ 4. INSPECTION TEAM ═══════════ --}}
+  <div class="step" id="team-block">
+    <div class="step-bar"><span class="step-no">4</span> Inspection Team
+      <span class="opt">Those who conducted the site visit</span></div>
+    <div class="step-body">
+      <div class="hint" style="margin-bottom:14px">
+        These names and positions appear on the signature block of the report.
+        The inspector recording this inspection is included automatically.
+      </div>
+
+      <div id="team-list">
+        @php
+          $teamRows = old('team', $inspection?->team->map(fn($m) => [
+              'name' => $m->name, 'position' => $m->position, 'institution' => $m->institution,
+          ])->all() ?? [['name' => auth()->user()->name, 'position' => '', 'institution' => 'City of Kigali']]);
+        @endphp
+
+        @foreach($teamRows as $i => $m)
+          <div class="team-row">
+            <input class="fi" name="team[{{ $i }}][name]" placeholder="Full name" value="{{ $m['name'] ?? '' }}">
+            <select class="fi" name="team[{{ $i }}][position]">
+              <option value="">Select position</option>
+              @foreach(config('positions') as $group => $list)
+                <optgroup label="{{ $group }}">
+                  @foreach($list as $pos)
+                    <option value="{{ $pos }}" @selected(($m['position'] ?? '') === $pos)>{{ $pos }}</option>
+                  @endforeach
+                </optgroup>
+              @endforeach
+            </select>
+            <input class="fi" name="team[{{ $i }}][institution]" placeholder="Institution" value="{{ $m['institution'] ?? 'City of Kigali' }}">
+            <button type="button" class="btn btn-ghost btn-sm team-remove">&times;</button>
+          </div>
+        @endforeach
+      </div>
+
+      <button type="button" id="team-add" class="btn btn-ghost btn-sm" style="margin-top:10px">+ Add team member</button>
+    </div>
+  </div>
+
+  
+
+  <script>
+  (function () {
+    var list = document.getElementById('team-list');
+    var posHtml = document.querySelector('#team-list select').innerHTML;
+
+    document.getElementById('team-add').addEventListener('click', function () {
+      var n = list.querySelectorAll('.team-row').length;
+      if (n >= 8) return;
+      var row = document.createElement('div');
+      row.className = 'team-row';
+      row.innerHTML =
+        '<input class="fi" name="team[' + n + '][name]" placeholder="Full name">' +
+        '<select class="fi" name="team[' + n + '][position]">' + posHtml + '</select>' +
+        '<input class="fi" name="team[' + n + '][institution]" placeholder="Institution" value="City of Kigali">' +
+        '<button type="button" class="btn btn-ghost btn-sm team-remove">&times;</button>';
+      list.appendChild(row);
+    });
+
+    list.addEventListener('click', function (e) {
+      if (e.target.classList.contains('team-remove') && list.querySelectorAll('.team-row').length > 1) {
+        e.target.closest('.team-row').remove();
+      }
+    });
+  })();
+  </script>
+
+  {{-- ═══════════ 5. FINDINGS ═══════════ --}}
+  <div class="step">
+    <div class="step-bar"><span class="step-no">5</span> Findings</div>
+    <div class="step-body">
+      <div class="hint" style="margin-bottom:14px">These paragraphs appear in the generated report and enforcement letter.</div>
+
+      <div style="display:grid;gap:16px">
+        <div>
+          <label class="fl">Observations</label>
+          <textarea class="fi" name="observations" rows="5" placeholder="What was found on site">{{ old('observations', optional($inspection)->observations) }}</textarea>
+        </div>
+        <div>
+          <label class="fl">Recommendations</label>
+          <textarea class="fi" name="recommendations" rows="5" placeholder="Required corrective action and timeframe">{{ old('recommendations', optional($inspection)->recommendations) }}</textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="save-bar">
+    <div class="sb-note">A draft stays editable. Completing makes the inspection available for report and letter generation.</div>
+    <div class="sb-actions">
+      <button type="submit" name="action" value="draft" class="btn btn-ghost">Save as Draft</button>
+      <button type="submit" name="action" value="complete" class="btn btn-success">Complete Inspection</button>
+    </div>
+  </div>
+</form>
+
+
+
+<script>
+/* With two checklists on the page, every tally must count only the one in
+   use. Passing the form in keeps this usable from either closure. */
+function activeSet(form) {
+  return form.querySelector('.stage-set.on') || form;
+}
+
+/* The stage decides which checklist applies. The set not in use is
+   disabled as well as hidden: a hidden input still posts, and an officer
+   who changed their mind mid-form would otherwise submit answers to
+   questions they never saw. */
+(function () {
+  var sel  = document.getElementById('building_status');
+  var sets = document.querySelectorAll('.stage-set');
+  if (!sel || sets.length < 2) return;
+
+  function apply() {
+    sets.forEach(function (set) {
+      var on = set.dataset.stage === sel.value;
+      set.classList.toggle('on', on);
+      set.style.display = on ? '' : 'none';
+      set.querySelectorAll('input, select, textarea').forEach(function (el) {
+        el.disabled = ! on;
+      });
+    });
+    document.dispatchEvent(new Event('stage:changed'));
+  }
+
+  sel.addEventListener('change', apply);
+  apply();
+})();
+
+const KIGALI = @json(config('kigali'));
+
+/* ---------- Cascading location ---------- */
+(function () {
+  const dEl = document.getElementById('district');
+  const sEl = document.getElementById('sector');
+  const cEl = document.getElementById('cell');
+
+  const savedSector = @json(old('sector', $entity->sector ?? ''));
+  const savedCell   = @json(old('cell', $entity->cell ?? ''));
+
+  function fill(select, values, selected, placeholder) {
+    select.innerHTML = '<option value="">' + placeholder + '</option>';
+    values.forEach(v => {
+      const o = document.createElement('option');
+      o.value = v; o.textContent = v;
+      if (v === selected) o.selected = true;
+      select.appendChild(o);
+    });
+    select.disabled = values.length === 0;
+  }
+
+  function onDistrict(keepSector) {
+    const sectors = KIGALI[dEl.value] ? Object.keys(KIGALI[dEl.value]) : [];
+    fill(sEl, sectors, keepSector ? savedSector : '', 'Select sector');
+    onSector(keepSector);
+  }
+
+  function onSector(keepCell) {
+    const cells = (KIGALI[dEl.value] && KIGALI[dEl.value][sEl.value]) || [];
+    fill(cEl, cells, keepCell ? savedCell : '', 'Select cell');
+  }
+
+  dEl.addEventListener('change', () => onDistrict(false));
+  sEl.addEventListener('change', () => onSector(false));
+  onDistrict(true);
+})();
+
+/* ---------- UPI rows ---------- */
+(function () {
+  const list = document.getElementById('upi-list');
+  const hint = document.getElementById('upi-hint');
+
+  function template() {
+    const row = document.createElement('div');
+    row.className = 'upi-row';
+    row.innerHTML =
+      '<input class="fi upi-input" name="upis[]" placeholder="1/02/05/03/4745" ' +
+      'pattern="[1-5]/[0-9]{2}/[0-9]{2}/[0-9]{2}/[0-9]+(-[0-9]+)?">' +
+      '<button type="button" class="btn btn-ghost btn-sm upi-remove">&times;</button>';
+    return row;
+  }
+
+  document.getElementById('upi-add').addEventListener('click', () => {
+    if (list.querySelectorAll('.upi-row').length >= 6) return;
+    list.appendChild(template());
+  });
+
+  list.addEventListener('click', e => {
+    if (e.target.classList.contains('upi-remove')) {
+      if (list.querySelectorAll('.upi-row').length > 1) e.target.closest('.upi-row').remove();
+    }
+  });
+
+  // Insert the slashes as the inspector types digits.
+  list.addEventListener('input', e => {
+    if (!e.target.classList.contains('upi-input')) return;
+    const el = e.target;
+    if (el.value.includes('-')) return;
+
+    const digits = el.value.replace(/[^\d]/g, '');
+    const groups = [1, 2, 2, 2];
+    let out = '', i = 0;
+
+    for (const len of groups) {
+      if (i >= digits.length) break;
+      out += (out ? '/' : '') + digits.substr(i, len);
+      i += len;
+    }
+    if (i < digits.length) out += '/' + digits.substr(i);
+    if (out !== el.value) el.value = out;
+
+    const nonKigali = Array.from(list.querySelectorAll('.upi-input'))
+      .some(x => x.value.length > 1 && !x.value.startsWith('1/'));
+    hint.textContent = nonKigali
+      ? 'This parcel is outside the City of Kigali — check the first digit.'
+      : 'Format: province / district / sector / cell / parcel. Kigali parcels begin with 1.';
+    hint.classList.toggle('upi-warn', nonKigali);
+  });
+})();
+
+/* ---------- Photos ---------- */
+(function () {
+  const MAX = 3;
+  const preview = document.getElementById('photo-preview');
+  let chosen = [];
+
+  document.querySelectorAll('.photo-input').forEach(input => {
+    input.addEventListener('change', () => {
+      Array.from(input.files).forEach(f => {
+        if (chosen.length >= MAX) return;
+        chosen.push(f);
+      });
+      render();
+    });
+  });
+
+  function render() {
+    preview.innerHTML = '';
+    chosen.forEach((f, i) => {
+      const d = document.createElement('div');
+      d.className = 'ph-thumb';
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(f);
+      const cap = document.createElement('div');
+      cap.className = 'ph-name';
+      cap.textContent = f.name;
+      const rm = document.createElement('div');
+      rm.className = 'ph-del';
+      rm.textContent = 'Remove';
+      rm.onclick = () => { chosen.splice(i, 1); render(); sync(); };
+      d.append(img, cap, rm);
+      preview.appendChild(d);
+    });
+    sync();
+  }
+
+  function sync() {
+    const dt = new DataTransfer();
+    chosen.forEach(f => dt.items.add(f));
+    const first = document.querySelector('.photo-input');
+    first.files = dt.files;
+    document.querySelectorAll('.photo-input').forEach((el, i) => { if (i > 0) el.value = ''; });
+  }
+})();
+
+/* ---------- Progress and scoring ---------- */
+(function () {
+  const form = document.getElementById('inspection-form');
+
+  /* Read each time rather than captured once: the visible checklist
+     changes when the stage does, and a list taken at page load would go
+     on counting the set that is no longer in use. */
+  const itemsNow = () => Array.from(activeSet(form).querySelectorAll('.chk-item'));
+
+  function refresh() {
+    const items = itemsNow();
+    let yes = 0, no = 0, na = 0, earned = 0, possible = 0;
+
+    items.forEach(item => {
+      const checked = item.querySelector('input[type=radio]:checked');
+      const weight = parseFloat(item.dataset.weight) || 0;
+      item.querySelectorAll('.sbtn').forEach(b => b.classList.toggle('on', b.querySelector('input').checked));
+      if (!checked) return;
+      if (checked.value === 'yes') { yes++; earned += weight; possible += weight; }
+      else if (checked.value === 'no') { no++; possible += weight; }
+      else { na++; }
+    });
+
+    const done = yes + no + na;
+    document.getElementById('pb-done').textContent = done;
+
+    /* The total follows the visible checklist. Printed once at render it
+       stayed at whichever stage sorted first, so superstructure read
+       "44 of 26". */
+    const total = document.getElementById('pb-total');
+    if (total) total.textContent = items.length;
+    document.getElementById('pb-fill').style.width = items.length ? (100 * done / items.length) + '%' : '0';
+    document.getElementById('t-yes').textContent = yes;
+    document.getElementById('t-no').textContent = no;
+    document.getElementById('t-na').textContent = na;
+    document.getElementById('t-score').textContent = possible > 0 ? Math.round(100 * earned / possible) + '%' : '\u2014';
+
+    activeSet(form).querySelectorAll('.chk-section').forEach(sec => {
+      const n = sec.querySelectorAll('.chk-item input[type=radio]:checked').length;
+      const el = sec.querySelector('.sec-done');
+      if (el) el.textContent = n;
+    });
+  }
+
+  /* The tallies follow the stage: switching swaps which checklist is in
+     use, and the figures must follow at once rather than on the next
+     click. */
+  document.addEventListener('stage:changed', refresh);
+
+  form.addEventListener('change', e => { if (e.target.type === 'radio') refresh(); });
+
+  let dirty = false;
+  form.addEventListener('input', () => { dirty = true; });
+  form.addEventListener('submit', () => { dirty = false; });
+  window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+  refresh();
+})();
+</script>
+
+
+{{-- mandatory-checklist --}}
+
+
+<div class="gap-banner" id="gap-banner">
+  <span id="gap-text"></span>
+  <button type="button" id="gap-jump">Go to first</button>
+</div>
+
+<script>
+(function () {
+  var form   = document.getElementById('inspection-form');
+  var banner = document.getElementById('gap-banner');
+  var text   = document.getElementById('gap-text');
+
+  function unanswered() {
+    return Array.from(activeSet(form).querySelectorAll('.chk-item'))
+      .filter(function (i) { return !i.querySelector('input[type=radio]:checked'); });
+  }
+
+  function mark() {
+    var gaps = unanswered();
+
+    activeSet(form).querySelectorAll('.chk-item').forEach(function (i) { i.classList.remove('unanswered'); });
+    gaps.forEach(function (i) { i.classList.add('unanswered'); });
+
+    activeSet(form).querySelectorAll('.chk-section').forEach(function (sec) {
+      var n = Array.from(sec.querySelectorAll('.chk-item'))
+        .filter(function (i) { return !i.querySelector('input[type=radio]:checked'); }).length;
+      var head = sec.querySelector('.sec-head');
+      if (head) head.classList.toggle('has-gap', n > 0);
+    });
+
+    return gaps;
+  }
+
+  document.getElementById('gap-jump').addEventListener('click', function () {
+    var first = form.querySelector('.chk-item.unanswered');
+    if (first) {
+      first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      banner.style.display = 'none';
+    }
+  });
+
+  form.addEventListener('change', function (e) {
+    if (e.target.type === 'radio' && banner.style.display === 'flex') {
+      if (mark().length === 0) banner.style.display = 'none';
+    }
+  });
+
+  form.addEventListener('submit', function (e) {
+    var completing = document.activeElement && document.activeElement.value === 'complete';
+    if (!completing) return;
+
+    var gaps = mark();
+    if (gaps.length === 0) return;
+
+    e.preventDefault();
+    text.textContent = gaps.length + ' checklist ' +
+      (gaps.length === 1 ? 'item still needs' : 'items still need') +
+      ' an answer. Save as draft if you need to finish later.';
+    banner.style.display = 'flex';
+    gaps[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+})();
+</script>
+
+
+{{-- GPS and validation --}}
+
+
+<script>
+/* The stage decides which checklist applies. The set not in use is
+   disabled as well as hidden: a hidden input still posts, and an officer
+   who switched stages mid-form would otherwise submit answers to
+   questions they never saw. */
+(function () {
+  var sel  = document.getElementById('building_status');
+  var sets = document.querySelectorAll('.stage-set');
+  if (!sel || sets.length < 2) return;
+
+  function apply() {
+    sets.forEach(function (set) {
+      var on = set.dataset.stage === sel.value;
+      set.style.display = on ? '' : 'none';
+      set.querySelectorAll('input, select, textarea').forEach(function (el) {
+        el.disabled = ! on;
+      });
+    });
+  }
+
+  sel.addEventListener('change', apply);
+  apply();
+})();
+
+/* ---------- GPS ---------- */
+(function () {
+  var lat  = document.getElementById('latitude');
+  var lng  = document.getElementById('longitude');
+  var note = document.getElementById('gps-note');
+  var btn  = document.getElementById('gps-capture');
+
+  /* Kigali sits between roughly -2.10 and -1.85 latitude, 29.95 and
+     30.20 longitude. A value far outside that is a typing slip — most
+     often the two swapped, or a missing minus sign. */
+  function check() {
+    var a = parseFloat(lat.value), b = parseFloat(lng.value);
+    if (isNaN(a) && isNaN(b)) { note.className = 'gps-note'; note.textContent = 'Capture uses this device\'s position, or type the coordinates if you have them.'; return; }
+
+    if (isNaN(a) || isNaN(b)) {
+      note.className = 'gps-note bad';
+      note.textContent = 'Both latitude and longitude are needed.';
+      return;
+    }
+
+    if (a > 0 && b < 0) {
+      note.className = 'gps-note bad';
+      note.textContent = 'These look swapped. In Kigali latitude is negative, longitude positive.';
+      return;
+    }
+
+    if (a < -2.4 || a > -1.6 || b < 29.6 || b > 30.5) {
+      note.className = 'gps-note bad';
+      note.textContent = 'That position is outside Kigali. Check the figures.';
+      return;
+    }
+
+    note.className = 'gps-note ok';
+    note.textContent = 'Position accepted.';
+  }
+
+  lat.addEventListener('input', check);
+  lng.addEventListener('input', check);
+  check();
+
+  btn.addEventListener('click', function () {
+    if (!navigator.geolocation) {
+      note.className = 'gps-note bad';
+      note.textContent = 'This device cannot report its position. Type the coordinates instead.';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Locating…';
+    note.className = 'gps-note';
+    note.textContent = 'Reading position…';
+
+    navigator.geolocation.getCurrentPosition(function (p) {
+      lat.value = p.coords.latitude.toFixed(6);
+      lng.value = p.coords.longitude.toFixed(6);
+      btn.disabled = false;
+      btn.textContent = 'Capture';
+      check();
+      note.textContent = 'Captured to within about ' + Math.round(p.coords.accuracy) + ' m.';
+    }, function () {
+      btn.disabled = false;
+      btn.textContent = 'Capture';
+      note.className = 'gps-note bad';
+      note.textContent = 'Could not read the position. Type the coordinates instead.';
+    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+  });
+})();
+</script>
+
+@endsection
+
+@push('styles')
+<style>
+    .team-row{display:grid;grid-template-columns:1.1fr 1.4fr 1fr auto;gap:9px;margin-bottom:9px;align-items:center}
+    @media(max-width:760px){.team-row{grid-template-columns:1fr}}
+    .team-row:first-child .team-remove{visibility:hidden}
+  </style>
+<style>
+  /* ---- Step sections ---- */
+  .step{background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:18px;
+        box-shadow:var(--sh);overflow:hidden}
+  .step-bar{background:var(--blue);color:#fff;padding:13px 20px;font-size:14.5px;font-weight:700;
+            letter-spacing:-.01em;display:flex;align-items:center;gap:11px}
+  .step-no{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;
+           border-radius:6px;background:var(--gold);color:var(--blue);font-size:13px;font-weight:800}
+  .opt{margin-left:auto;font-size:11px;font-weight:600;opacity:.85;letter-spacing:.03em}
+  .step-body{padding:20px 22px}
+
+  .sub-head{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+            color:var(--blue);margin:22px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--line);
+            display:flex;align-items:baseline;gap:10px}
+  .sub-note{font-size:10.5px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted)}
+
+  /* ---- Fields ---- */
+  .fgrid{display:grid;gap:15px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+  .fgrid .f2{grid-column:span 2}
+  @media(max-width:660px){.fgrid .f2{grid-column:span 1}}
+  .fl{display:block;font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+      color:var(--muted);margin-bottom:5px}
+  .req{color:var(--red)}
+  .fi{width:100%;padding:10px 12px;border:1px solid #D3D8E0;border-radius:7px;
+      font-size:14px;font-family:inherit;background:#fff;color:var(--ink)}
+  .fi:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,51,160,.11)}
+  .fi:invalid:not(:placeholder-shown){border-color:var(--red)}
+  .fi.sm{padding:7px 10px;font-size:12.5px}
+  textarea.fi{resize:vertical;line-height:1.6}
+  .hint{font-size:11.5px;color:var(--muted);margin-top:5px}
+
+  /* ---- UPI rows ---- */
+  .upi-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+  .upi-input{font-variant-numeric:tabular-nums;letter-spacing:.02em}
+  .upi-remove{padding:8px 12px;font-size:16px;line-height:1;color:var(--muted)}
+  .upi-row:first-child .upi-remove{visibility:hidden}
+  .upi-tools{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px}
+  .upi-warn{color:#8A6D00;font-weight:600}
+
+  /* ---- Progress ---- */
+  .progress-bar{position:sticky;top:var(--topbar-h);z-index:60;background:#fff;
+    border:1px solid var(--line);border-radius:10px;padding:12px 18px;margin-bottom:16px;
+    display:flex;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:var(--sh)}
+  .pb-left{font-size:12.5px;color:var(--muted);white-space:nowrap}
+  .pb-track{flex:1;min-width:110px;height:8px;background:#EEF1F5;border-radius:5px;overflow:hidden}
+  .pb-fill{height:100%;width:0;background:var(--blue);border-radius:5px;transition:width .3s}
+  .pb-right{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .tally{font-size:11px;font-weight:600;color:var(--muted)}
+  .tally b{font-size:13px;margin-left:3px}
+  .tally.yes b{color:var(--green)} .tally.no b{color:var(--red)} .tally.na b{color:var(--muted)}
+  .score{font-size:16px;font-weight:800;color:var(--blue);font-variant-numeric:tabular-nums}
+
+  /* ---- Checklist ---- */
+  .chk-section{background:#fff;border:1px solid var(--line);border-radius:10px;
+               margin-bottom:16px;box-shadow:var(--sh);overflow:hidden;padding:0 0 6px}
+  .sec-head{display:flex;justify-content:space-between;align-items:center;gap:12px;
+    background:#EDF2FC;color:var(--blue);padding:12px 20px;font-size:13.5px;font-weight:700;
+    border-bottom:1px solid #DCE5F7}
+  .sec-no{display:inline-flex;align-items:center;justify-content:center;width:23px;height:23px;
+    border-radius:6px;background:var(--blue);color:#fff;font-size:11.5px;margin-right:9px}
+  .sec-count{font-size:11.5px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+  .chk-item{display:grid;grid-template-columns:1fr auto;gap:8px 16px;padding:12px 20px;
+            border-top:1px solid #F1F3F6;align-items:start}
+  .chk-item:first-of-type{border-top:none}
+  .chk-item.carried{background:#FEFBF2}
+  .ci-label{font-size:13.5px;line-height:1.5}
+  .wt{display:inline-block;margin-left:8px;font-size:10px;font-weight:800;color:var(--blue);
+      background:#EDF2FC;padding:1px 7px;border-radius:10px;vertical-align:1px}
+  .carried-tag{display:inline-block;margin-left:7px;font-size:9.5px;font-weight:800;
+    letter-spacing:.05em;text-transform:uppercase;color:#8A6D00;background:#FFF4D6;
+    padding:2px 7px;border-radius:10px;vertical-align:1px}
+  .ci-status{display:flex;gap:5px}
+  .ci-comment{grid-column:1/-1}
+  .sbtn{border:1px solid #D3D8E0;background:#fff;color:var(--muted);font-size:11px;font-weight:700;
+        padding:7px 14px;border-radius:6px;cursor:pointer;min-width:48px;text-align:center;
+        transition:all .12s;user-select:none}
+  .sbtn input{position:absolute;opacity:0;width:0;height:0}
+  .sbtn:hover{background:#F6F8FB}
+  .sbtn.s-yes.on{background:#E4F5EA;border-color:var(--green);color:#00612B}
+  .sbtn.s-no.on {background:#FDE8E6;border-color:var(--red);color:var(--red)}
+  .sbtn.s-na.on {background:#F1F3F6;border-color:#9AA1AC;color:#4A5361}
+
+  /* ---- Photos ---- */
+  .photo-drop{border:2px dashed #D3D8E0;border-radius:10px;padding:22px;text-align:center;background:#FAFBFC}
+  .pd-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:10px}
+  .pd-actions .btn{cursor:pointer}
+  .pd-note{font-size:11.5px;color:var(--muted)}
+  .photo-preview,.photo-existing{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;justify-content:center}
+  .ph-thumb{width:132px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+  .ph-thumb img{width:100%;height:96px;object-fit:cover;display:block}
+  .ph-del{display:block;padding:6px;font-size:11px;color:var(--red);cursor:pointer;text-align:center}
+  .ph-name{padding:6px;font-size:10.5px;color:var(--muted);text-align:center;
+           white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+           
+    
+    .prohibited{display:inline-block;margin-left:8px;font-size:9.5px;font-weight:800;
+    letter-spacing:.05em;text-transform:uppercase;color:#B71C1C;background:#FDECEA;
+    padding:2px 7px;vertical-align:1px}
+
+  /* ---- Save bar ---- */
+  .save-bar{position:sticky;bottom:0;background:#fff;border:1px solid var(--line);
+    border-radius:10px;padding:14px 20px;display:flex;justify-content:space-between;
+    align-items:center;gap:16px;flex-wrap:wrap;box-shadow:0 -3px 14px rgba(16,24,40,.07)}
+  .sb-note{font-size:12px;color:var(--muted);flex:1;min-width:200px}
+  .sb-actions{display:flex;gap:9px}
+
+  @media(max-width:700px){
+    .chk-item{grid-template-columns:1fr}
+    .ci-status{justify-content:flex-start}
+    .progress-bar{position:static}
+    .step-body{padding:16px 14px}
+  }
+</style>
+<style>
+  .chk-item.unanswered{background:#FFF6F5;box-shadow:inset 3px 0 0 var(--red)}
+  .chk-item.unanswered .ci-label{font-weight:600}
+  .sec-head.has-gap{background:#FDECEA;color:var(--red);border-bottom-color:#F6C9C4}
+  .sec-head.has-gap .sec-no{background:var(--red)}
+  .gap-banner{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);
+    background:var(--red);color:#fff;padding:12px 20px;border-radius:9px;font-size:13.5px;
+    font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.22);z-index:200;max-width:90vw;
+    display:none;align-items:center;gap:14px}
+  .gap-banner button{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);
+    color:#fff;border-radius:6px;padding:5px 12px;font:600 12px inherit;font-family:inherit;cursor:pointer}
+</style>
+<style>
+  .chk-item.unanswered{background:#FFF6F5;box-shadow:inset 3px 0 0 var(--red)}
+  .chk-item.unanswered .ci-status .sbtn{border-color:#EFA9A1}
+  .item-flag{display:block;margin-top:6px;font-size:11.5px;font-weight:600;color:var(--red)}
+  .sec-head.has-gap{background:#FDECEA;color:var(--red);border-bottom-color:#F6C9C4}
+  .sec-head.has-gap .sec-no{background:var(--red)}
+
+  /* New GPS styles */
+  .gps-block{margin-bottom:18px}
+  .gps-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+  .gps-field{flex:1;min-width:130px}
+  .gps-field span{display:block;font-family:var(--f-head);font-size:9.5px;font-weight:600;
+                  letter-spacing:.8px;text-transform:uppercase;color:var(--tertiary);margin-bottom:5px}
+  .gps-note{font-size:12px;color:var(--body-text);margin-top:7px}
+  .gps-note.bad{color:var(--danger)}
+  .gps-note.ok{color:var(--success)}
+</style>
+@endpush

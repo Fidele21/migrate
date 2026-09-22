@@ -1,0 +1,204 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Document;
+use App\Models\Fine;
+use App\Models\FinePayment;
+use App\Models\Inspection;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * Penalties.
+ *
+ * Proposed by an inspector, director, senior inspector or the secretary;
+ * confirmed by a Senior or Chief Inspector; settled against by the
+ * Recovery Officer. A fine is payable only once confirmed.
+ */
+class FineController extends Controller
+{
+    /** The fines register, scoped to what the user may see. */
+    public function index(Request $request)
+    {
+        $user = auth()->user();
+        abort_unless($user->can('fine.view'), 403);
+
+        $query = Fine::with(['entity', 'proposer', 'confirmer', 'inspection'])
+            ->orderByRaw("FIELD(status,'confirmed','part_paid','proposed','paid','waived','cancelled')")
+            ->orderBy('due_date');
+
+        if (! $user->can('inspection.view.all')) {
+            $query->where('district_id', $user->district_id);
+        }
+
+        if ($status = $request->query('status')) {
+            $query->where('status', $status);
+        }
+
+        if ($term = trim((string) $request->query('q'))) {
+            $query->whereHas('entity', fn ($q) => $q
+                ->where('name', 'like', "%{$term}%")
+                ->orWhere('owner', 'like', "%{$term}%")
+                ->orWhere('upi', 'like', "%{$term}%"));
+        }
+
+        $all = (clone $query)->get();
+
+        return view('fine.index', [
+            'fines'   => $all,
+            'filters' => $request->only(['status', 'q']),
+            'summary' => [
+                'proposed'    => $all->where('status', Fine::PROPOSED)->count(),
+                'confirmed'   => $all->whereIn('status', [Fine::CONFIRMED, Fine::PART_PAID])->count(),
+                'overdue'     => $all->filter(fn ($f) => $f->isOverdue())->count(),
+                'outstanding' => $all->sum(fn ($f) => $f->isPayable() ? $f->outstanding() : 0),
+                'collected'   => $all->sum('amount_paid'),
+            ],
+            'canConfirm' => $user->can('fine.confirm'),
+            'canRecord'  => $user->can('fine.payment.update'),
+        ]);
+    }
+
+    public function create(Request $request)
+    {
+        abort_unless(auth()->user()->can('fine.suggest'), 403);
+
+        $inspection = $request->filled('inspection')
+            ? Inspection::with('entity')->find($request->integer('inspection'))
+            : null;
+
+        $letter = $request->filled('letter')
+            ? Document::find($request->integer('letter'))
+            : null;
+
+        return view('fine.form', compact('inspection', 'letter'));
+    }
+
+    public function store(Request $request)
+    {
+        abort_unless(auth()->user()->can('fine.suggest'), 403);
+
+        $data = $request->validate([
+            'inspection_id' => ['required', 'exists:inspections,id'],
+            'document_id'   => ['nullable', 'exists:documents,id'],
+            'amount'        => ['required', 'numeric', 'min:1', 'max:999999999'],
+            'reason'        => ['required', 'string', 'min:10', 'max:2000'],
+            'legal_basis'   => ['nullable', 'string', 'max:255'],
+            'due_date'      => ['nullable', 'date', 'after:today'],
+        ], [
+            'reason.min'      => 'Give enough detail for the Chief Inspector to judge the proposal.',
+            'due_date.after'  => 'The due date must be in the future.',
+        ]);
+
+        $inspection = Inspection::findOrFail($data['inspection_id']);
+
+        $fine = Fine::create([
+            'inspection_id' => $inspection->id,
+            'document_id'   => $data['document_id'] ?? null,
+            'entity_id'     => $inspection->entity_id,
+            'district_id'   => $inspection->district_id,
+            'status'        => Fine::PROPOSED,
+            'amount'        => $data['amount'],
+            'reason'        => $data['reason'],
+            'legal_basis'   => $data['legal_basis'] ?? null,
+            'due_date'      => $data['due_date'] ?? null,
+            'proposed_by'   => auth()->id(),
+            'proposed_at'   => now(),
+        ]);
+
+        return redirect()->route('fine.show', $fine)
+            ->with('status', 'Fine proposed. It becomes payable once confirmed.');
+    }
+
+    public function show(Fine $fine)
+    {
+        abort_unless(auth()->user()->can('fine.view'), 403);
+
+        return view('fine.show', [
+            'fine'       => $fine->load(['entity', 'inspection', 'document', 'proposer', 'confirmer', 'payments.recorder']),
+            'canConfirm' => auth()->user()->can('fine.confirm') && $fine->status === Fine::PROPOSED,
+            'canRecord'  => auth()->user()->can('fine.payment.update') && $fine->isPayable(),
+        ]);
+    }
+
+    /** Senior or Chief Inspector confirms, adjusts or cancels. */
+    public function confirm(Request $request, Fine $fine)
+    {
+        abort_unless(auth()->user()->can('fine.confirm'), 403);
+        abort_unless($fine->status === Fine::PROPOSED, 422, 'This fine has already been decided.');
+
+        $data = $request->validate([
+            'decision' => ['required', 'in:confirm,waive,cancel'],
+            'amount'   => ['required_if:decision,confirm', 'nullable', 'numeric', 'min:1'],
+            'due_date' => ['nullable', 'date', 'after:today'],
+            'note'     => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $fine->forceFill([
+            'status' => match ($data['decision']) {
+                'confirm' => Fine::CONFIRMED,
+                'waive'   => Fine::WAIVED,
+                'cancel'  => Fine::CANCELLED,
+            },
+            'amount'       => $data['decision'] === 'confirm' ? $data['amount'] : $fine->amount,
+            'due_date'     => $data['due_date'] ?? $fine->due_date,
+            'confirmed_by' => auth()->id(),
+            'confirmed_at' => now(),
+            'confirm_note' => $data['note'] ?? null,
+            'reference'    => $fine->reference ?: $this->nextReference(),
+        ])->save();
+
+        return redirect()->route('fine.show', $fine)->with('status', match ($data['decision']) {
+            'confirm' => 'Fine confirmed and now payable.',
+            'waive'   => 'Fine waived.',
+            'cancel'  => 'Fine cancelled.',
+        });
+    }
+
+    /** Recovery Officer records a payment received. */
+    public function pay(Request $request, Fine $fine)
+    {
+        abort_unless(auth()->user()->can('fine.payment.update'), 403);
+        abort_unless($fine->isPayable(), 422, 'This fine is not currently payable.');
+
+        $data = $request->validate([
+            'amount'    => ['required', 'numeric', 'min:1', 'max:' . $fine->outstanding()],
+            'paid_on'   => ['required', 'date', 'before_or_equal:today'],
+            'method'    => ['required', 'string', 'max:40'],
+            'reference' => ['nullable', 'string', 'max:80'],
+            'note'      => ['nullable', 'string', 'max:500'],
+        ], [
+            'amount.max' => 'That is more than the outstanding balance of '
+                            . number_format($fine->outstanding()) . ' RWF.',
+        ]);
+
+        DB::transaction(function () use ($fine, $data) {
+            FinePayment::create([
+                'fine_id'     => $fine->id,
+                'amount'      => $data['amount'],
+                'paid_on'     => $data['paid_on'],
+                'method'      => $data['method'],
+                'reference'   => $data['reference'] ?? null,
+                'note'        => $data['note'] ?? null,
+                'recorded_by' => auth()->id(),
+            ]);
+
+            $fine->recorded_by = auth()->id();
+            $fine->refreshSettlement();
+        });
+
+        return redirect()->route('fine.show', $fine)->with('status',
+            number_format((float) $data['amount']) . ' RWF recorded. '
+            . ($fine->fresh()->status === Fine::PAID
+                ? 'The fine is now settled in full.'
+                : number_format($fine->fresh()->outstanding()) . ' RWF remains outstanding.'));
+    }
+
+    private function nextReference(): string
+    {
+        $n = Fine::whereNotNull('reference')->count() + 1;
+
+        return 'CoK/FINE/' . now()->format('Y') . '/' . str_pad((string) $n, 4, '0', STR_PAD_LEFT);
+    }
+}

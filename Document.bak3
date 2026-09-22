@@ -1,0 +1,220 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+/**
+ * A report or enforcement letter moving through the CoK approval chain.
+ *
+ *   DRAFT
+ *     -> PENDING_DIRECTOR   inspector completes and signs
+ *     -> PENDING_SENIOR     director of the district verifies and signs
+ *     -> PENDING_CHIEF      senior inspector verifies
+ *     -> APPROVED           chief inspector approves and signs; frozen
+ *     -> ISSUED             served on the owner
+ *
+ * Any reviewer may RETURN a document, which sends it back to the
+ * drafting inspector with a mandatory written reason.
+ */
+class Document extends Model
+{
+    use SoftDeletes;
+
+    public const DRAFT            = 'draft';
+    public const PENDING_DIRECTOR = 'pending_director';
+    public const PENDING_SENIOR   = 'pending_senior';
+    public const PENDING_CHIEF    = 'pending_chief';
+    public const RETURNED         = 'returned';
+    public const APPROVED         = 'approved';
+    public const ISSUED           = 'issued';
+    public const CANCELLED        = 'cancelled';
+
+    protected $fillable = [
+        'type', 'version', 'supersedes_id', 'inspection_id', 'status',
+        'current_holder_id', 'district_id', 'reference_number',
+        'title', 'body_html', 'created_by',
+        'letter_type', 'subject', 'salutation', 'deadline_days', 'deadline_date','prior_reference', 'prior_date', 'reply_date', 'serial',
+        'content_html', 'is_manual', 'imported_from', 'case_reference', 'signature_stage', 'signatures_opened_at', 'sealed_at', 'sealed_hash',
+        
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'submitted_at'   => 'datetime',
+            'approved_at'    => 'datetime',
+            'issued_at'      => 'datetime',
+            'referenced_at'  => 'datetime',
+            'printed_at'     => 'datetime',
+            'dispatched_at'  => 'datetime',
+            'edited_at'      => 'datetime',
+            'deadline_date'  => 'date',
+            'prior_date'     => 'date',
+            'reply_date'     => 'date',
+            'is_manual'      => 'boolean',
+            'approved_at'  => 'datetime',
+            'issued_at'    => 'datetime',
+            'version'      => 'integer',
+            'deadline_date' => 'date',
+            'prior_date'    => 'date',
+            'reply_date'    => 'date',
+            'is_manual' => 'boolean',
+            'edited_at' => 'datetime',
+            'signatures_opened_at' => 'datetime',
+            'sealed_at' => 'datetime',
+        ];
+        
+    }
+
+    /**
+     * Legal transitions, and the permission each one requires.
+     * A transition not listed here cannot happen.
+     */
+    public static function transitions(): array
+    {
+        return [
+            self::DRAFT            => [self::PENDING_DIRECTOR => 'document.sign.inspector'],
+            self::RETURNED         => [self::PENDING_DIRECTOR => 'document.sign.inspector'],
+            self::PENDING_DIRECTOR => [
+                self::PENDING_SENIOR => 'document.verify.district',
+                self::RETURNED       => 'document.return',
+            ],
+            self::PENDING_SENIOR   => [
+                self::PENDING_CHIEF => 'document.verify.city',
+                self::RETURNED      => 'document.return',
+            ],
+            self::PENDING_CHIEF    => [
+                self::APPROVED => 'document.approve',
+                self::RETURNED => 'document.return',
+            ],
+            self::APPROVED         => [self::ISSUED => 'document.issue'],
+            self::ISSUED           => [],
+            self::CANCELLED        => [],
+        ];
+    }
+
+    public function permissionFor(string $toStatus): ?string
+    {
+        return self::transitions()[$this->status][$toStatus] ?? null;
+    }
+
+    public function canTransitionTo(string $toStatus): bool
+    {
+        return $this->permissionFor($toStatus) !== null;
+    }
+
+    /** Editing is permitted only before the document enters review. */
+    /**
+     * May the content still be changed?
+     *
+     * A sealed report cannot. A signature that does not fix the content
+     * is not a signature, so once the Director has signed, the only
+     * remaining actions are download and transmission.
+     */
+    public function isEditable(): bool
+    {
+        if ($this->sealed_at) {
+            return false;
+        }
+
+        if ($this->type === 'report') {
+            return $this->signature_stage !== 'pending_signatures';
+        }
+
+        return in_array($this->status, [self::DRAFT, self::RETURNED], true);
+    }
+
+    /** Approved and issued documents are frozen for legal reasons. */
+    public function isFrozen(): bool
+    {
+        return in_array($this->status, [self::APPROVED, self::ISSUED], true);
+    }
+
+    public function isAwaitingReview(): bool
+    {
+        return in_array($this->status, [
+            self::PENDING_DIRECTOR, self::PENDING_SENIOR, self::PENDING_CHIEF,
+        ], true);
+    }
+
+    /** SHA-256 of the content, used to make signatures tamper-evident. */
+    public function computeHash(): string
+    {
+        return hash('sha256', $this->title . '|' . $this->body_html);
+    }
+
+    public function inspection(): BelongsTo   { return $this->belongsTo(Inspection::class); }
+    public function district(): BelongsTo    { return $this->belongsTo(District::class); }
+    public function creator(): BelongsTo     { return $this->belongsTo(User::class, 'created_by'); }
+    public function holder(): BelongsTo      { return $this->belongsTo(User::class, 'current_holder_id'); }
+    public function supersedes(): BelongsTo  { return $this->belongsTo(Document::class, 'supersedes_id'); }
+
+    public function transitionLog(): HasMany
+    {
+        return $this->hasMany(DocumentTransition::class)->orderBy('created_at');
+    }
+
+    public function signatures(): HasMany
+    {
+        return $this->hasMany(DocumentSignature::class)->orderBy('signed_at');
+    }
+    
+    /** A report whose content is fixed by signature. */
+    public function isSealed(): bool
+    {
+        return (bool) $this->sealed_at;
+    }
+
+    /** Is the content still exactly what was signed? */
+    public function sealIntact(): bool
+    {
+        return $this->sealed_hash
+            && hash_equals($this->sealed_hash, $this->computeHash());
+    }
+
+    /** Officers who must sign, with whether each has. */
+    public function signatureProgress(): array
+    {
+        $signed = $this->signatures->keyBy('user_id');
+
+        $team = $this->inspection?->team()->whereNotNull('user_id')->get() ?? collect();
+
+        return [
+            'officers' => $team->map(fn ($m) => [
+                'user_id'  => $m->user_id,
+                'name'     => $m->name,
+                'position' => $m->position,
+                'is_lead'  => (bool) $m->is_lead,
+                'signed'   => $signed->has($m->user_id),
+                'signed_at'=> $signed->get($m->user_id)?->signed_at,
+            ])->all(),
+            'director' => $signed->firstWhere('stage', 'director'),
+            'awaiting' => $team->reject(fn ($m) => $signed->has($m->user_id))->count(),
+        ];
+    }
+
+    /** May this person add their signature now? */
+    public function awaitingSignatureFrom($user): bool
+    {
+        if ($this->type !== 'report' || $this->signature_stage !== 'pending_signatures') {
+            return false;
+        }
+
+        if ($this->signatures->firstWhere('user_id', $user->id)) {
+            return false;
+        }
+
+        if ($this->inspection?->conductedBy($user)) {
+            return true;
+        }
+
+        // The Director signs only once every officer has.
+        return $user->can('document.verify.district')
+            && $user->coversDistrict($this->district_id)
+            && $this->signatureProgress()['awaiting'] === 0;
+    }
+}

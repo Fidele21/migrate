@@ -1,0 +1,318 @@
+{{--
+  The enforcement letter, in the City of Kigali format.
+
+  Structure follows the approved template exactly:
+    page 1  letterhead, reference, addressee, subject, citation
+            paragraphs, requirement, signature, distribution list
+    page 2  the annexe listing what must be put right
+
+  Word reads this as HTML. Page geometry comes from the @page rule, and
+  the letterhead spans the margin by way of a negative margin matching it.
+--}}
+
+@php
+  use App\Support\ComplianceBand;
+
+  $inspection = $letter->inspection;
+  $entity     = $inspection?->entity;
+  $cfg        = config('letters');
+
+  /* The registry reference. The Secretary types the serial from the
+     register book kept outside this platform, so until it is recorded
+     the line shows the dotted rule of the printed form. */
+  $serial   = $letter->reference_number ?: str_repeat('.', 22);
+  $registry = data_get($cfg, 'reference.registry_code', '07.01.14');
+  $refYear  = ($letter->issued_at ?? $letter->created_at ?? now())->format('y');
+
+  $letterDate = $letter->issued_at
+      ? $letter->issued_at->format('d/m/Y')
+      : str_repeat('.', 16);
+
+  /* What the premises failed. A prohibition item — a kitchen at a petrol
+     station — is failed by answering yes, so the test is inverted. */
+  $failures = collect();
+
+  if ($inspection && $inspection->template) {
+      $answers = $inspection->answers->keyBy('item_id');
+
+      foreach ($inspection->template->sections as $section) {
+          foreach ($section->items as $item) {
+              $a = $answers->get($item->id);
+              if (! $a || ! in_array($a->status, ['yes', 'no'], true)) continue;
+
+              $complied = $item->is_prohibition ? $a->status === 'no' : $a->status === 'yes';
+
+              if (! $complied) {
+                  $failures->push((object) [
+                      'section' => $section->title,
+                      'label'   => rtrim($item->label, '. '),
+                      'comment' => $a->comment,
+                      'banned'  => (bool) $item->is_prohibition,
+                  ]);
+              }
+          }
+      }
+  }
+
+  $deadline = $letter->deadline_days ?: data_get($cfg, 'default_deadline_days', 30);
+@endphp
+
+<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word" lang="rw">
+<head>
+<meta charset="utf-8">
+<title>{{ $letter->title ?? 'Ibaruwa' }}</title>
+
+<!--[if gte mso 9]><xml>
+  <w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument>
+</xml><![endif]-->
+
+<style>
+  /* Letter size, one inch left and right, nothing top or bottom —
+     the letterhead and the footer occupy those. */
+  @page{
+    size:8.5in 11in;
+    margin:0in 1in 0in 1in;
+  }
+
+  body{
+    font-family:'Montserrat',Calibri,Arial,sans-serif;
+    font-size:11pt;
+    line-height:1.5;
+    color:#000;
+    margin:0;
+  }
+
+  p,div,td,li,span{
+    font-family:'Montserrat',Calibri,Arial,sans-serif;
+    font-size:11pt;
+  }
+
+  /* The letterhead reaches the edge of the sheet; the text does not. */
+  .letterhead{margin:0 -1in 14pt -1in}
+  .letterhead img{display:block;width:100%;height:auto}
+
+  .ref-row{width:100%;border-collapse:collapse;margin-bottom:22pt}
+  .ref-row td{font-size:11pt;vertical-align:top;padding:0}
+  .ref-left{text-align:left}
+  .ref-right{text-align:right}
+
+  .addressee{margin-bottom:2pt;font-weight:bold}
+  .addressee-tel{margin-bottom:2pt;font-weight:bold}
+  .addressee-city{font-weight:bold;text-decoration:underline;margin-bottom:18pt}
+
+  .subject{margin-bottom:16pt}
+  .subject b{text-decoration:underline}
+
+  .salutation{margin-bottom:12pt}
+
+  .clause{text-align:justify;margin-bottom:12pt}
+
+  .closing{margin-top:18pt;margin-bottom:26pt}
+
+  .sig{margin-bottom:4pt}
+  .sig img{height:52pt;display:block;margin-bottom:2pt}
+  .sig b{display:block;font-weight:bold}
+
+  .cc-title{font-weight:bold;margin-top:20pt;margin-bottom:5pt}
+  .cc{margin:0 0 2pt 0;font-size:10.5pt}
+
+  .end-city{font-weight:bold;margin-top:14pt;text-align:center}
+
+  .foot{margin-top:26pt;padding-top:7pt;border-top:0.5pt solid #999;
+        font-size:8.5pt;color:#333;text-align:center}
+
+  /* ---- The annexe ---- */
+  .annex{page-break-before:always}
+  .annex-title{font-weight:bold;text-decoration:underline;text-align:center;
+               font-size:10pt;margin-bottom:14pt}
+  table.items{width:100%;border-collapse:collapse;font-size:10pt}
+  table.items th{border:0.5pt solid #999;background:#EFEFEF;padding:5pt 6pt;
+                 text-align:left;font-weight:bold;font-size:9.5pt}
+  table.items td{border:0.5pt solid #999;padding:5pt 6pt;vertical-align:top;font-size:10pt}
+  td.no{width:24pt;text-align:center}
+  .banned{color:#B71C1C;font-weight:bold}
+  .note{font-size:9pt;color:#444;font-style:italic}
+</style>
+</head>
+<body>
+
+{{-- ══════════ Letterhead ══════════ --}}
+@include('partials.letterhead', ['forWord' => true])
+
+{{-- ══════════ Reference and date ══════════ --}}
+<table class="ref-row">
+  <tr>
+    <td class="ref-left" style="width:55%">
+      Ref N<sup>o</sup> {{ $serial }}/{{ $registry }}/{{ $refYear }}
+    </td>
+    <td class="ref-right" style="width:45%">
+      Kigali, ku wa {{ $letterDate }}
+    </td>
+  </tr>
+</table>
+
+{{-- ══════════ Addressee ══════════ --}}
+<div class="addressee">Bwana/Madamu {{ $entity->owner ?: '…………' }}</div>
+<div class="addressee-tel">Tel: {{ $entity->telephone ?: '…………' }}</div>
+<div class="addressee-city">KIGALI</div>
+
+{{-- ══════════ Subject ══════════ --}}
+<div class="subject">
+  <b>Impamvu</b>: {{ $letter->subject ?: 'Kubagezaho ubugenzuzi bwakorewe inyubako yanyu' }}
+</div>
+
+<div class="salutation">{{ $letter->salutation ?: 'Bwana/Madamu' }};</div>
+
+{{-- ══════════ Body ══════════ --}}
+@if(filled($letter->content_html))
+
+  {{-- Edited by hand: what was written is what is sent. --}}
+  {!! $letter->content_html !!}
+
+@else
+
+  {{-- 1. The law relied upon --}}
+  <div class="clause">
+    {{ $legalBasis }}
+
+  </div>
+
+  {{-- 2. The inspection this letter arises from --}}
+  <div class="clause">
+    Dushingiye ku bugenzuzi bwakozwe ku wa
+    {{ $inspection?->inspection_date?->format('d/m/Y') ?? '../.../202.' }}
+    mu nyubako yanyu <strong>({{ $entity->name ?? '—' }})</strong>
+    iherereye mu murenge wa {{ $entity->sector ?: '—' }}
+    mu kibanza gifite UPI: {{ $entity->upi ?: '—' }}
+    yasuwe bikagaragara ko
+    @if($failures->count())
+      bimwe mu bikoresho nkenerwa byifashishwa mu gukumira inkongi z'umuriro
+      no kurinda umutekano bibura;
+    @else
+      hari ibisabwa bitujujwe;
+    @endif
+  </div>
+
+  {{-- 3. Prior correspondence, only where there was some --}}
+  @if($letter->prior_reference || $letter->prior_date)
+    <div class="clause">
+      Dushingiye ku ibaruwa mwandikiwe ifite Ref No:
+      {{ $letter->prior_reference ?: '—' }}
+      yo ku wa {{ $letter->prior_date?->format('d/m/Y') ?: '—' }}@if($letter->reply_date),
+      dushingiye kandi ku ibaruwa yanyu mwatwandikiye yo ku wa
+      {{ $letter->reply_date->format('d/m/Y') }}
+      musaba kongererwa igihe cyo gushyira mu bikorwa ibyo mwasabwe mu ibaruwa
+      yavuzwe haruguru@endif;
+    </div>
+  @endif
+
+  {{-- 4. What is required, and by when --}}
+  <div class="clause">
+    Tubandikiye tubasaba ko mwashyira mu bikorwa ibigaragazwa ku mugereka
+    w'iyi baruwa bitarenze <strong>iminsi {{ $deadline }}</strong>@if($letter->deadline_date)
+    (bitarenze {{ $letter->deadline_date->format('d/m/Y') }})@endif,
+    mutabikora mugahanwa hakurikijwe amategeko.
+  </div>
+
+@endif
+
+<div class="closing">Mugire amahoro.</div>
+
+{{-- ══════════ Signature ══════════ --}}
+@php
+  $signature = $letter->signatures->firstWhere('stage', 'director')
+            ?? $letter->signatures->last();
+  $signer = $signature?->signer_id ? \App\Models\User::find($signature->signer_id) : null;
+@endphp
+
+<div class="sig">
+  @if($signer && method_exists($signer, 'signatureData') && $signer->signatureData())
+    <img src="{{ $signer->signatureData() }}" alt="">
+  @endif
+  <b>{{ $signature->signer_name ?? data_get($cfg, 'signatory.title', 'Chief Inspector') }}</b>
+  @if($signature)
+    <span style="font-size:10pt">{{ $signature->signer_role }}</span>
+  @endif
+</div>
+
+{{-- ══════════ Distribution ══════════ --}}
+<div class="cc-title">Bimenyeshejwe:</div>
+@foreach(data_get($cfg, 'distribution', []) as $line)
+  <div class="cc">- {{ str_replace(
+      [':district', ':sector'],
+      [$entity->district ?: '……...', $entity->sector ?: '……...'],
+      $line) }}</div>
+@endforeach
+
+<div class="end-city">KIGALI</div>
+
+<div class="foot">
+  Umujyi wa Kigali B.P. 3527 Kigali &nbsp;|&nbsp; Hotline: 3260 &nbsp;|&nbsp;
+  Info@kigalicity.gov.rw &nbsp;|&nbsp; www.kigalicity.gov.rw
+</div>
+
+{{-- ══════════ Page 2 — the annexe ══════════ --}}
+<div class="annex">
+  @include('partials.letterhead', ['forWord' => true])
+
+  <div class="annex-title">
+    Annex: Recommendations &mdash; ibigomba gukosorwa
+  </div>
+
+  <p style="font-size:10pt;margin-bottom:12pt">
+    {{ $entity->name ?? '—' }} &middot;
+    UPI {{ $entity->upi ?: '—' }} &middot;
+    ubugenzuzi bwo ku wa {{ $inspection?->inspection_date?->format('d/m/Y') ?? '—' }}
+    @if($inspection)
+      &middot; {{ round((float) $inspection->compliance, 1) }}%
+    @endif
+  </p>
+
+  @if($failures->count())
+    <table class="items">
+      <thead>
+        <tr>
+          <th class="no">N<sup>o</sup></th>
+          <th>Ibisabwa &mdash; requirement not met</th>
+          <th style="width:30%">Icyiciro &mdash; section</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach($failures as $n => $f)
+          <tr>
+            <td class="no">{{ $n + 1 }}</td>
+            <td>
+              {{ $f->label }}
+              @if($f->banned)
+                <span class="banned">&mdash; ntibyemewe (prohibited)</span>
+              @endif
+              @if($f->comment)
+                <div class="note">{{ $f->comment }}</div>
+              @endif
+            </td>
+            <td>{{ $f->section }}</td>
+          </tr>
+        @endforeach
+      </tbody>
+    </table>
+
+    <p style="font-size:10pt;margin-top:14pt">
+      Ibi byose bigomba gushyirwa mu bikorwa bitarenze iminsi {{ $deadline }}
+      uhereye ku munsi wakiriye iyi baruwa.
+    </p>
+  @else
+    <p style="font-size:10pt">
+      Nta bisabwa bitujujwe byagaragaye muri ubu bugenzuzi.
+    </p>
+  @endif
+
+  <div class="foot">
+    Umujyi wa Kigali B.P. 3527 Kigali &nbsp;|&nbsp; Hotline: 3260 &nbsp;|&nbsp;
+    Info@kigalicity.gov.rw &nbsp;|&nbsp; www.kigalicity.gov.rw
+  </div>
+</div>
+
+</body>
+</html>
