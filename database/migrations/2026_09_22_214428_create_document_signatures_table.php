@@ -26,35 +26,16 @@ return new class extends Migration
     {
         Schema::create('document_signatures', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('document_id')->constrained()->cascadeOnDelete();
 
-            /* Required. A signature pointing at no document proves
-               nothing, so the database refuses to hold one.
-
-               restrictOnDelete rather than cascade: a signed document
-               must not be deletable while its signatures exist. With
-               soft deletes this never fires; with a hard delete it is
-               the difference between an audit trail and a gap in one. */
-            $table->foreignId('document_id')
-                  ->constrained()
-                  ->restrictOnDelete();
-
-            /* Nullable, and nulled if the account is removed. The record
-               rests on signer_name and signer_role below, not on this
-               link - so a departing officer does not erase their own
-               signature, and does not become undeletable either. */
-            $table->foreignId('signer_id')
-                  ->nullable()
-                  ->constrained('users')
-                  ->nullOnDelete();
+            $table->foreignId('signer_id')->constrained('users');
 
             // The role held at the moment of signing. Stored rather than
             // derived, because a person's role may change afterwards.
             $table->string('signer_role', 60);
             $table->string('signer_name', 120);
 
-            // SHA-256 of the document body as it stood when signed.
             $table->string('content_hash', 64);
-
             $table->string('signature_method', 20)->default('drawn');
             $table->string('signature_path')->nullable();
 
@@ -62,7 +43,6 @@ return new class extends Migration
             $table->timestamp('signed_at')->useCurrent();
 
             $table->index(['document_id', 'signed_at']);
-            $table->index('signer_id');
         });
     }
 
