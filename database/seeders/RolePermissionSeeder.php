@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 /**
  * Roles and permissions for the CoK Inspection Unit.
@@ -31,6 +32,13 @@ class RolePermissionSeeder extends Seeder
 {
     public function run(): void
     {
+        /* DatabaseSeeder runs WithoutModelEvents, which mutes the saved
+           event Spatie uses to flush its permission cache. Without these
+           flushes the lookups below read a stale cached list and fail
+           with PermissionDoesNotExist on names just written. */
+        $registrar = app(PermissionRegistrar::class);
+        $registrar->forgetCachedPermissions();
+
         $permissions = [
             // ---- Inspections ----
             'inspection.create', 'inspection.followup',
@@ -65,6 +73,8 @@ class RolePermissionSeeder extends Seeder
         foreach ($permissions as $p) {
             Permission::findOrCreate($p, 'web');
         }
+
+        $registrar->forgetCachedPermissions();
 
         // Building blocks, so the ladder stays readable.
         $field = [
