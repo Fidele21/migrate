@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Sep 22, 2026 at 11:12 AM
+-- Generation Time: Sep 23, 2026 at 10:32 AM
 -- Server version: 10.11.19-MariaDB-cll-lve
 -- PHP Version: 8.4.25
 
@@ -96,12 +96,15 @@ CREATE TABLE `cache` (
 --
 
 INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
+('cok-inspection-platform-cache-login:arukundo@kigalicity.gov.rw|197.157.187.174', 'i:1;', 1790103838),
 ('cok-inspection-platform-cache-login:emmanuel.rukundo@gasabo.gov.rw|41.186.137.80', 'i:1;', 1789802394),
 ('cok-inspection-platform-cache-login:emmanuel.rukundo@gasabo.gov.rw|41.186.139.110', 'i:1;', 1789887778),
 ('cok-inspection-platform-cache-login:honorine.igihozo@nyarugenge.gov.rw|105.178.115.22', 'i:1;', 1789637069),
 ('cok-inspection-platform-cache-login:igihozohonorine1@gmail.com|197.243.113.194', 'i:2;', 1789544181),
 ('cok-inspection-platform-cache-login:peace.uwera@kivukiro.gov.rw|41.186.139.221', 'i:1;', 1789446439),
-('cok-inspection-platform-cache-spatie.permission.cache', 'a:3:{s:5:\"alias\";a:4:{s:1:\"a\";s:2:\"id\";s:1:\"b\";s:4:\"name\";s:1:\"c\";s:10:\"guard_name\";s:1:\"r\";s:5:\"roles\";}s:11:\"permissions\";a:36:{i:0;a:4:{s:1:\"a\";i:1;s:1:\"b\";s:17:\"inspection.create\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:5:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;}}i:1;a:4:{s:1:\"a\";i:2;s:1:\"b\";s:19:\"inspection.edit.own\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:5:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;}}i:2;a:4:{s:1:\"a\";i:3;s:1:\"b\";s:24:\"inspection.edit.district\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:3;}}i:3;a:4:{s:1:\"a\";i:4;s:1:\"b\";s:19:\"inspection.view.own\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:5:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;}}i:4;a:4:{s:1:\"a\";i:5;s:1:\"b\";s:24:\"inspection.view.district\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:5;a:4:{s:1:\"a\";i:6;s:1:\"b\";s:19:\"inspection.view.all\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:5:{i:0;i:4;i:1;i:5;i:2;i:6;i:3;i:7;i:4;i:8;}}i:6;a:4:{s:1:\"a\";i:7;s:1:\"b\";s:18:\"inspection.archive\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:3;i:1;i:5;}}i:7;a:4:{s:1:\"a\";i:8;s:1:\"b\";s:14:\"document.draft\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:5:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;}}i:8;a:4:{s:1:\"a\";i:9;s:1:\"b\";s:13:\"document.edit\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:5:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;}}i:9;a:4:{s:1:\"a\";i:10;s:1:\"b\";s:23:\"document.sign.inspector\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:5:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;}}i:10;a:4:{s:1:\"a\";i:11;s:1:\"b\";s:24:\"document.verify.district\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:3:{i:0;i:3;i:1;i:4;i:2;i:5;}}i:11;a:4:{s:1:\"a\";i:12;s:1:\"b\";s:20:\"document.verify.city\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:4;i:1;i:5;}}i:12;a:4:{s:1:\"a\";i:13;s:1:\"b\";s:16:\"document.approve\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:13;a:4:{s:1:\"a\";i:14;s:1:\"b\";s:15:\"document.return\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:3:{i:0;i:3;i:1;i:4;i:2;i:5;}}i:14;a:4:{s:1:\"a\";i:15;s:1:\"b\";s:14:\"document.issue\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:4;i:1;i:5;}}i:15;a:4:{s:1:\"a\";i:16;s:1:\"b\";s:14:\"checklist.view\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:7:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;i:5;i:6;i:6;i:7;}}i:16;a:4:{s:1:\"a\";i:17;s:1:\"b\";s:17:\"checklist.publish\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:5;i:1;i:6;}}i:17;a:4:{s:1:\"a\";i:18;s:1:\"b\";s:11:\"user.manage\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:6;}}i:18;a:4:{s:1:\"a\";i:19;s:1:\"b\";s:15:\"district.manage\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:6;}}i:19;a:4:{s:1:\"a\";i:20;s:1:\"b\";s:19:\"audit.view.district\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:3;}}i:20;a:4:{s:1:\"a\";i:21;s:1:\"b\";s:14:\"audit.view.all\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:3:{i:0;i:4;i:1;i:5;i:2;i:6;}}i:21;a:3:{s:1:\"a\";i:22;s:1:\"b\";s:13:\"report.export\";s:1:\"c\";s:3:\"web\";}i:22;a:4:{s:1:\"a\";i:23;s:1:\"b\";s:19:\"inspection.followup\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:5:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;}}i:23;a:4:{s:1:\"a\";i:24;s:1:\"b\";s:15:\"document.upload\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:5:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;}}i:24;a:4:{s:1:\"a\";i:25;s:1:\"b\";s:16:\"letter.reference\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:7;}}i:25;a:4:{s:1:\"a\";i:26;s:1:\"b\";s:12:\"letter.print\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:7;}}i:26;a:4:{s:1:\"a\";i:27;s:1:\"b\";s:18:\"letter.upload_scan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:7;}}i:27;a:4:{s:1:\"a\";i:28;s:1:\"b\";s:15:\"letter.dispatch\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:7;}}i:28;a:4:{s:1:\"a\";i:30;s:1:\"b\";s:12:\"fine.confirm\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:3:{i:0;i:4;i:1;i:5;i:2;i:7;}}i:29;a:4:{s:1:\"a\";i:31;s:1:\"b\";s:19:\"fine.payment.update\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:8;}}i:30;a:4:{s:1:\"a\";i:32;s:1:\"b\";s:9:\"fine.view\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:7:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;i:5;i:7;i:6;i:8;}}i:31;a:4:{s:1:\"a\";i:33;s:1:\"b\";s:13:\"entity.search\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:8:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;i:5;i:6;i:6;i:7;i:7;i:8;}}i:32;a:4:{s:1:\"a\";i:34;s:1:\"b\";s:12:\"export.excel\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:8:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;i:5;i:6;i:6;i:7;i:7;i:8;}}i:33;a:4:{s:1:\"a\";i:35;s:1:\"b\";s:10:\"export.pdf\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:8:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;i:5;i:6;i:6;i:7;i:7;i:8;}}i:34;a:4:{s:1:\"a\";i:36;s:1:\"b\";s:11:\"road.manage\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:4:{i:0;i:1;i:1;i:3;i:2;i:4;i:3;i:5;}}i:35;a:4:{s:1:\"a\";i:37;s:1:\"b\";s:11:\"fine.adjust\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:3:{i:0;i:3;i:1;i:4;i:2;i:5;}}}s:5:\"roles\";a:8:{i:0;a:3:{s:1:\"a\";i:1;s:1:\"b\";s:9:\"Inspector\";s:1:\"c\";s:3:\"web\";}i:1;a:3:{s:1:\"a\";i:2;s:1:\"b\";s:14:\"Lead Inspector\";s:1:\"c\";s:3:\"web\";}i:2;a:3:{s:1:\"a\";i:3;s:1:\"b\";s:22:\"Director of Inspection\";s:1:\"c\";s:3:\"web\";}i:3;a:3:{s:1:\"a\";i:4;s:1:\"b\";s:16:\"Senior Inspector\";s:1:\"c\";s:3:\"web\";}i:4;a:3:{s:1:\"a\";i:5;s:1:\"b\";s:15:\"Chief Inspector\";s:1:\"c\";s:3:\"web\";}i:5;a:3:{s:1:\"a\";i:6;s:1:\"b\";s:13:\"Administrator\";s:1:\"c\";s:3:\"web\";}i:6;a:3:{s:1:\"a\";i:7;s:1:\"b\";s:9:\"Secretary\";s:1:\"c\";s:3:\"web\";}i:7;a:3:{s:1:\"a\";i:8;s:1:\"b\";s:16:\"Recovery Officer\";s:1:\"c\";s:3:\"web\";}}}', 1790147432);
+('cok-inspection-platform-cache-login:serge.mugabo@gasabo.gov.rw|197.157.186.161', 'i:1;', 1790149739),
+('cok-inspection-platform-cache-login:serge.mugabo@gasabo.gov.rw|197.157.187.174', 'i:1;', 1790111026),
+('cok-inspection-platform-cache-spatie.permission.cache', 'a:3:{s:5:\"alias\";a:4:{s:1:\"a\";s:2:\"id\";s:1:\"b\";s:4:\"name\";s:1:\"c\";s:10:\"guard_name\";s:1:\"r\";s:5:\"roles\";}s:11:\"permissions\";a:36:{i:0;a:4:{s:1:\"a\";i:1;s:1:\"b\";s:17:\"inspection.create\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:5:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;}}i:1;a:4:{s:1:\"a\";i:2;s:1:\"b\";s:19:\"inspection.edit.own\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:5:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;}}i:2;a:4:{s:1:\"a\";i:3;s:1:\"b\";s:24:\"inspection.edit.district\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:3;}}i:3;a:4:{s:1:\"a\";i:4;s:1:\"b\";s:19:\"inspection.view.own\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:5:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;}}i:4;a:4:{s:1:\"a\";i:5;s:1:\"b\";s:24:\"inspection.view.district\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:4:{i:0;i:2;i:1;i:3;i:2;i:4;i:3;i:5;}}i:5;a:4:{s:1:\"a\";i:6;s:1:\"b\";s:19:\"inspection.view.all\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:5:{i:0;i:4;i:1;i:5;i:2;i:6;i:3;i:7;i:4;i:8;}}i:6;a:4:{s:1:\"a\";i:7;s:1:\"b\";s:18:\"inspection.archive\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:3;i:1;i:5;}}i:7;a:4:{s:1:\"a\";i:8;s:1:\"b\";s:14:\"document.draft\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:5:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;}}i:8;a:4:{s:1:\"a\";i:9;s:1:\"b\";s:13:\"document.edit\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:5:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;}}i:9;a:4:{s:1:\"a\";i:10;s:1:\"b\";s:23:\"document.sign.inspector\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:5:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;}}i:10;a:4:{s:1:\"a\";i:11;s:1:\"b\";s:24:\"document.verify.district\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:3:{i:0;i:3;i:1;i:4;i:2;i:5;}}i:11;a:4:{s:1:\"a\";i:12;s:1:\"b\";s:20:\"document.verify.city\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:4;i:1;i:5;}}i:12;a:4:{s:1:\"a\";i:13;s:1:\"b\";s:16:\"document.approve\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:13;a:4:{s:1:\"a\";i:14;s:1:\"b\";s:15:\"document.return\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:3:{i:0;i:3;i:1;i:4;i:2;i:5;}}i:14;a:4:{s:1:\"a\";i:15;s:1:\"b\";s:14:\"document.issue\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:4;i:1;i:5;}}i:15;a:4:{s:1:\"a\";i:16;s:1:\"b\";s:14:\"checklist.view\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:7:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;i:5;i:6;i:6;i:7;}}i:16;a:4:{s:1:\"a\";i:17;s:1:\"b\";s:17:\"checklist.publish\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:5;i:1;i:6;}}i:17;a:4:{s:1:\"a\";i:18;s:1:\"b\";s:11:\"user.manage\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:6;}}i:18;a:4:{s:1:\"a\";i:19;s:1:\"b\";s:15:\"district.manage\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:6;}}i:19;a:4:{s:1:\"a\";i:20;s:1:\"b\";s:19:\"audit.view.district\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:3;}}i:20;a:4:{s:1:\"a\";i:21;s:1:\"b\";s:14:\"audit.view.all\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:3:{i:0;i:4;i:1;i:5;i:2;i:6;}}i:21;a:3:{s:1:\"a\";i:22;s:1:\"b\";s:13:\"report.export\";s:1:\"c\";s:3:\"web\";}i:22;a:4:{s:1:\"a\";i:23;s:1:\"b\";s:19:\"inspection.followup\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:5:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;}}i:23;a:4:{s:1:\"a\";i:24;s:1:\"b\";s:15:\"document.upload\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:5:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;}}i:24;a:4:{s:1:\"a\";i:25;s:1:\"b\";s:16:\"letter.reference\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:7;}}i:25;a:4:{s:1:\"a\";i:26;s:1:\"b\";s:12:\"letter.print\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:7;}}i:26;a:4:{s:1:\"a\";i:27;s:1:\"b\";s:18:\"letter.upload_scan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:7;}}i:27;a:4:{s:1:\"a\";i:28;s:1:\"b\";s:15:\"letter.dispatch\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:7;}}i:28;a:4:{s:1:\"a\";i:30;s:1:\"b\";s:12:\"fine.confirm\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:3:{i:0;i:4;i:1;i:5;i:2;i:7;}}i:29;a:4:{s:1:\"a\";i:31;s:1:\"b\";s:19:\"fine.payment.update\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:8;}}i:30;a:4:{s:1:\"a\";i:32;s:1:\"b\";s:9:\"fine.view\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:7:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;i:5;i:7;i:6;i:8;}}i:31;a:4:{s:1:\"a\";i:33;s:1:\"b\";s:13:\"entity.search\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:8:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;i:5;i:6;i:6;i:7;i:7;i:8;}}i:32;a:4:{s:1:\"a\";i:34;s:1:\"b\";s:12:\"export.excel\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:8:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;i:5;i:6;i:6;i:7;i:7;i:8;}}i:33;a:4:{s:1:\"a\";i:35;s:1:\"b\";s:10:\"export.pdf\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:8:{i:0;i:1;i:1;i:2;i:2;i:3;i:3;i:4;i:4;i:5;i:5;i:6;i:6;i:7;i:7;i:8;}}i:34;a:4:{s:1:\"a\";i:36;s:1:\"b\";s:11:\"road.manage\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:4:{i:0;i:1;i:1;i:3;i:2;i:4;i:3;i:5;}}i:35;a:4:{s:1:\"a\";i:37;s:1:\"b\";s:11:\"fine.adjust\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:3:{i:0;i:3;i:1;i:4;i:2;i:5;}}}s:5:\"roles\";a:8:{i:0;a:3:{s:1:\"a\";i:1;s:1:\"b\";s:9:\"Inspector\";s:1:\"c\";s:3:\"web\";}i:1;a:3:{s:1:\"a\";i:2;s:1:\"b\";s:14:\"Lead Inspector\";s:1:\"c\";s:3:\"web\";}i:2;a:3:{s:1:\"a\";i:3;s:1:\"b\";s:22:\"Director of Inspection\";s:1:\"c\";s:3:\"web\";}i:3;a:3:{s:1:\"a\";i:4;s:1:\"b\";s:16:\"Senior Inspector\";s:1:\"c\";s:3:\"web\";}i:4;a:3:{s:1:\"a\";i:5;s:1:\"b\";s:15:\"Chief Inspector\";s:1:\"c\";s:3:\"web\";}i:5;a:3:{s:1:\"a\";i:6;s:1:\"b\";s:13:\"Administrator\";s:1:\"c\";s:3:\"web\";}i:6;a:3:{s:1:\"a\";i:7;s:1:\"b\";s:9:\"Secretary\";s:1:\"c\";s:3:\"web\";}i:7;a:3:{s:1:\"a\";i:8;s:1:\"b\";s:16:\"Recovery Officer\";s:1:\"c\";s:3:\"web\";}}}', 1790234101);
 
 -- --------------------------------------------------------
 
@@ -1255,7 +1258,17 @@ INSERT INTO `entities` (`id`, `type_code`, `name`, `upi`, `owner`, `telephone`, 
 (345, 'building', 'Hôtel des Mille Collines', '1/01/09/03/686', 'Compagnie Rwandaise d\'Hôtellerie et Tourisme/RUBONEKA Consolatta', '0788192000', 'claire.kangwage@millecollines.rw', 'Hotel', 'C3', NULL, 'Nyarugenge', 'Nyarugenge', 'Kiyovu', NULL, -1.9467000, 30.0621000, NULL, NULL, '2026-09-21 18:27:50', '2026-09-21 18:27:50'),
 (346, 'waste_water', 'FIVE TO FIVE HOTEL Ltd', '1/02/13/01/1590', 'Haguminshuti Jean Baptiste', '0784936392', 'info@fivetofivehotel.com', 'Hotel', 'R2', NULL, 'Gasabo', 'Remera', 'Nyabisindu', NULL, -1.9553360, 30.1102810, NULL, NULL, '2026-09-21 18:28:57', '2026-09-21 18:28:57'),
 (347, 'building', '5 SWISS HOTEL', '1/01/09/03/862', '5 SWISS LTD', '0785511155', 'nargisuwamahoro84@gmail.com', 'Hotel', 'C1', NULL, 'Nyarugenge', 'Nyarugenge', 'Kiyovu', NULL, -1.9478000, 30.0638000, NULL, NULL, '2026-09-21 18:42:22', '2026-09-21 18:42:22'),
-(348, 'waste_water', 'Beauséjour Hotel', '1/02/13/03/623', 'MUHONGERWA Cecile', '0788388885', 'info@beausejourhotel.rw', 'Hotel', 'C1', NULL, 'Gasabo', 'Remera', 'Rukiri I', NULL, -1.9579530, 30.1045060, NULL, NULL, '2026-09-22 02:48:17', '2026-09-22 02:48:17');
+(348, 'waste_water', 'Beauséjour Hotel', '1/02/13/03/623', 'MUHONGERWA Cecile', '0788388885', 'info@beausejourhotel.rw', 'Hotel', 'C1', NULL, 'Gasabo', 'Remera', 'Rukiri I', NULL, -1.9579530, 30.1045060, NULL, NULL, '2026-09-22 02:48:17', '2026-09-22 02:48:17'),
+(349, 'waste_water', 'DOVE HOTEL', '1/02/04/02/200', 'ADEPR', '0781818791', 'info@dovehotel.rw', 'Hotel', 'R2', NULL, 'Gasabo', 'Gisozi', 'Ruhango', NULL, -1.9188270, 30.0542370, NULL, NULL, '2026-09-22 07:17:54', '2026-09-22 07:17:54'),
+(350, 'building', 'THE HUT HOTEL', '1/02/08/03/1034', 'BINOY TYHOMAS', '0788304788', 'reservation@thehuthotelrwanda.com', 'Hotel', 'C3', NULL, 'Gasabo', 'Kimihurura', 'Rugando', NULL, NULL, NULL, NULL, NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(351, 'building', 'SUNSET VILLAGE', '1/03/05/03/8474', 'MUGWANEZA CONSTANTE', '0788356321', 'sunsetvillage@gmail.com', 'Bar', 'R2', NULL, 'Kicukiro', 'Kanombe', 'Karama', NULL, -1.9798790, 30.1514190, NULL, NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(352, 'building', 'DOVE HOTEL', '1/02/04/02/200', 'ADEPR', '0781818791', 'info@dovehotel.rw', 'Hotel', 'R2', NULL, 'Gasabo', 'Gisozi', 'Ruhango', NULL, NULL, NULL, NULL, NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(353, 'waste_water', 'MADRAS HOTEL AND  APPARTEMENTS', '1/02/04/02/5749', 'MWUMVANEZA ERNEST', '0788265841', 'info@madras.rw', 'Hotel and Apartments', 'R2', NULL, 'Gasabo', 'Gisozi', 'Ruhango', NULL, -1.9234930, 30.0537970, NULL, NULL, '2026-09-22 08:45:34', '2026-09-22 08:45:34'),
+(354, 'waste_water', 'M apartment and hotel limited', '1/01/06/07/111', 'Miao', '0785651648', 'reservation@mhotelkigali.com', 'Commercial building', 'C1', NULL, 'Nyarugenge', 'Muhima', 'Ubumwe', NULL, -1.9499380, 30.0730150, NULL, NULL, '2026-09-22 09:03:42', '2026-09-22 09:03:42'),
+(355, 'building', 'MADRAS HOTEL', '1/02/04/02/5749', 'ORESTE BARAGAHORANA', '0788305874', 'info@madras.rw', 'HOTEL', 'R2', NULL, 'Gasabo', 'Gisozi', 'Ruhango', NULL, NULL, NULL, NULL, NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(356, 'building', 'PALOTTI HOTEL', '1/03/03/02/818', 'PALOTTI', '0787555755', 'pallotihouse@yahoo.com', 'Hotel', 'PF3', NULL, 'Kicukiro', 'Gikondo', 'Kansere', NULL, -1.9715710, 30.0801600, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(357, 'waste_water', 'Saint vicent pallotti hotel', '1/03/03/02/818', 'Peres pallottin', '0787555755', 'pallotihouse@yahoo.com', 'Hotel', 'PF3', NULL, 'Kicukiro', 'Gikondo', 'Kansere', NULL, -1.9715780, 30.0801560, NULL, NULL, '2026-09-22 11:34:44', '2026-09-22 11:34:44'),
+(358, 'waste_water', 'ONOMO Hotel', '1/01/06/07/128', 'Tim Brown', '0788310270', 'tim.brown@onomohotel.com', 'Commercial building', 'C1', NULL, 'Nyarugenge', 'Muhima', 'Ubumwe', NULL, NULL, NULL, NULL, NULL, '2026-09-22 14:15:55', '2026-09-22 14:15:55');
 
 -- --------------------------------------------------------
 
@@ -1637,7 +1650,17 @@ INSERT INTO `entity_upis` (`id`, `entity_id`, `upi`, `is_primary`, `note`, `crea
 (392, 345, '1/01/09/03/686', 1, NULL, '2026-09-21 18:27:50', '2026-09-21 18:27:50'),
 (393, 346, '1/02/13/01/1590', 1, NULL, '2026-09-21 18:28:57', '2026-09-21 18:28:57'),
 (394, 347, '1/01/09/03/862', 1, NULL, '2026-09-21 18:42:22', '2026-09-21 18:42:22'),
-(395, 348, '1/02/13/03/623', 1, NULL, '2026-09-22 02:48:17', '2026-09-22 02:48:17');
+(395, 348, '1/02/13/03/623', 1, NULL, '2026-09-22 02:48:17', '2026-09-22 02:48:17'),
+(396, 349, '1/02/04/02/200', 1, NULL, '2026-09-22 07:17:54', '2026-09-22 07:17:54'),
+(397, 350, '1/02/08/03/1034', 1, NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(398, 351, '1/03/05/03/8474', 1, NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(399, 352, '1/02/04/02/200', 1, NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(400, 353, '1/02/04/02/5749', 1, NULL, '2026-09-22 08:45:34', '2026-09-22 08:45:34'),
+(401, 354, '1/01/06/07/111', 1, NULL, '2026-09-22 09:03:42', '2026-09-22 09:03:42'),
+(402, 355, '1/02/04/02/5749', 1, NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(403, 356, '1/03/03/02/818', 1, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(404, 357, '1/03/03/02/818', 1, NULL, '2026-09-22 11:34:44', '2026-09-22 11:34:44'),
+(405, 358, '1/01/06/07/128', 1, NULL, '2026-09-22 14:15:55', '2026-09-22 14:15:55');
 
 -- --------------------------------------------------------
 
@@ -2290,7 +2313,17 @@ INSERT INTO `inspections` (`id`, `case_reference`, `entity_id`, `template_id`, `
 (357, NULL, 345, 3, 'building', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-21', 'new', NULL, 1, 'completed', 9, 'UWIKUNDA Idesbald', 3, NULL, 'a. To display emergency evacuation plans in clearly visible and easily accessible locations on every floor so that occupants can quickly identify emergency exits, escape routes, and firefighting equipment.\r\nb. To display emergency contact numbers inside the elevators and provide clear signs prohibiting the use of elevators in case of fire.\r\nc. To use standard signs indicating the assembly points.\r\nd. To provide sufficient fire-sand boxes filled with dry fine sand in the parking area and equipped with appropriate shovels.\r\ne. To perform periodic maintenance of electrical installations and obtain an Electrical Installation Compliance Certificate every three years.\r\nf. To send  electrical installation compliance certificate, lightning protection system test report, and elevator maintenance report to the City of Kigali through email: info@kigalicity.gov.rw.\r\ng. To replace analog cameras within the facility.\r\nh. To enhance and maintain proper hygiene and cleanliness in all toilet facilities, particularly those located on the 4th floor.\r\ni. To immediately remove and safely dispose of all expired fish fingers/brochettes and ensure regular checks of food expiry dates.\r\nj. To properly label all food items stored in refrigerators with preparation and expiry dates to ensure proper traceability and stock control.\r\nk. To relocate the small dry store from the hot kitchen to a suitable, clean, and well-organized storage area.\r\nl. To properly organize and store kitchen equipment in designated storage areas.\r\nm. To install a suitable wet-chemical fire extinguisher in the kitchen.\r\nn. To clearly label all kitchen sections and work areas to facilitate proper identification and organization.\r\no. To strictly separate cooked food from raw meat in the freezer by storing them in separate and properly labelled areas/containers.\r\np. To replace old and worn-out cutting boards to maintain hygienic food preparation conditions.\r\nl. To implement all the above recommendations within 30 days.', NULL, NULL, 67.00, 86.00, 77.91, NULL, NULL, NULL, NULL, '2026-09-21 18:27:50', '2026-09-22 05:17:01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (358, NULL, 346, 15, 'waste_water', 'stp', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-18', 'new', NULL, 1, 'completed', 22, 'MUGABO Serge', 1, '.No valid effluent quality test of treated waste water \r\n.Presence of  suspended solids and other impurities from the treated waste water \r\n.No maintenance company \r\n.No maintenance logbook', '. To Repair or replace immediately ,the malfunctioning filtration system .\r\n.To conduct effluent quality test of treated waste water every six months \r\n.To find a licenced company by RURA for maintenance \r\n.To keep all records regarding maintenance', NULL, NULL, 11.00, 17.00, 64.71, NULL, NULL, NULL, NULL, '2026-09-21 18:28:57', '2026-09-21 18:30:28', NULL, NULL, NULL, NULL, 'stp', NULL, 'activated_sludge', NULL, 7.50, 100, 6.00, 2014, '2026-09-18', '2026-08-21', 'quarterly', 'partially_functional', NULL, '2024-04-23', 'University of Rwanda -CST', 'public_drainage', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (359, NULL, 347, 3, 'building', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-21', 'new', NULL, 1, 'completed', 9, 'UWIKUNDA Idesbald', 3, NULL, 'a. To install a fully functional fire alarm system with a control panel throughout the facility.\r\nb. To maintain adequate water pressure for firefighting equipment by increasing the pressure in the hose reel system and ensuring that the pump provides a pressure of 8–15 bar.\r\nc. To display emergency exit and evacuation plans and clearly display emergency contact numbers for the police, ambulance, and fire brigade.\r\nd. To install additional CCTV cameras at the laundry area and entrance to improve security coverage.\r\ne. To install a metal detector at the entrance and establish an appropriate security screening mechanism for visitors.\r\nf. To make the assembly point accessible by removing obstructions from the parking area.\r\ng. To provide a suitable wet chemical fire extinguisher for the cooking area.\r\nh. To clearly label all kitchen sections and ensure that all areas are properly identified.\r\ni. To replace old and unhygienic kitchen utensils and equipment, including saucepans and other worn-out items.\r\nj. To immediately remove and replace broken plates in the kitchen.\r\nk. To improve cleanliness and housekeeping practices in the food preparation area, storage area, and kitchen.\r\nl. To relocate waste bins to a designated waste collection area and ensure proper waste management.\r\nm. To replace the old mosquito nets in the rooms.\r\nn. To replace old and worn-out tables and chairs with suitable furniture.\r\no. To increase cleaning frequency to prevent dust accumulation in the rooms and equipment.\r\np. To keep laundry items in a designated and properly organized storage area.\r\nq. To improve cleaning and housekeeping practices in the laundry area and ensure that appropriate hygiene and sanitation standards are maintained.\r\nR. To update the medical certificates of kitchen staff within two weeks.\r\nS. To submit the electrical installation compliance certificate and lightning protection system test report to the City of Kigali through the official email address: info@kigalicity.gov.rw.\r\nT. To implement all the above recommendations within 30 days.', NULL, NULL, 33.00, 64.00, 51.56, NULL, NULL, NULL, NULL, '2026-09-21 18:42:22', '2026-09-22 05:28:57', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(360, NULL, 348, 15, 'waste_water', 'stp', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-21', 'new', NULL, 1, 'completed', 22, 'MUGABO Serge', 1, '.The STP is partially functional, with some treatment processes not operating effectively.\r\n.The aeration s and filtration Systems are not functioning properly\r\n.Bad odour and suspended solids was observed in final effluent \r\n.No valid effluent quality test results', '.T conduct a comprehensive maintenance of the entire STP and restore all treatment units to proper working condition.\r\n.To conduct effluent quality test of treated waste water \r\n. To keep records of maintenance in logbook', NULL, NULL, 11.00, 17.00, 64.71, NULL, NULL, NULL, NULL, '2026-09-22 02:48:17', '2026-09-22 02:48:17', NULL, NULL, NULL, NULL, 'stp', NULL, 'activated_sludge', NULL, 15.00, 100, 10.00, 2009, '2026-08-12', NULL, 'as_needed', 'partially_functional', NULL, '2025-09-03', 'University of Rwanda -CST', 'public_drainage', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+(360, NULL, 348, 15, 'waste_water', 'stp', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-21', 'new', NULL, 1, 'completed', 22, 'MUGABO Serge', 1, '.The STP is partially functional, with some treatment processes not operating effectively.\r\n.The aeration s and filtration Systems are not functioning properly\r\n.Bad odour and suspended solids was observed in final effluent \r\n.No valid effluent quality test results', '.T conduct a comprehensive maintenance of the entire STP and restore all treatment units to proper working condition.\r\n.To conduct effluent quality test of treated waste water \r\n. To keep records of maintenance in logbook', NULL, NULL, 11.00, 17.00, 64.71, NULL, NULL, NULL, NULL, '2026-09-22 02:48:17', '2026-09-22 02:48:17', NULL, NULL, NULL, NULL, 'stp', NULL, 'activated_sludge', NULL, 15.00, 100, 10.00, 2009, '2026-08-12', NULL, 'as_needed', 'partially_functional', NULL, '2025-09-03', 'University of Rwanda -CST', 'public_drainage', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(361, NULL, 349, 16, 'waste_water', 'septic_tank', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-22', 'new', NULL, 1, 'completed', 22, 'MUGABO Serge', 1, '.Unpleasant odour around the Septic Tank\r\n. There are Septic tank which have 4 chambers for waste from toilet and Septic tank for Grey water and Laundry \r\n. Currently they are emptying Septic tank', '.To identify and rectify the source of the unpleasant odour from the septic tank and continued regular emptying with Vacuum truck / desludging service provider', NULL, NULL, 9.00, 14.00, 64.29, NULL, NULL, NULL, NULL, '2026-09-22 07:17:54', '2026-09-22 07:17:54', NULL, NULL, 'Jonas MUSANA', '0781054523', 'septic_tank', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 5, 'concrete', 70.00, 2015, 50.00, 'inside_compound', 'fair', 'emptying', 'Quick and Smart Sanitation Ltd', 'adequate', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(362, NULL, 350, 3, 'building', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-21', 'new', NULL, 1, 'completed', 8, 'NIYINGENERA Thierry', 1, 'There were no critical issues detected in this hotel as of the inspection was being conducted.', '1. To prepare schedule for maintenance of elevators, fire alarm systems and paralighting system testing for every six monts and keep the records documented.\r\n2. To incrrease/upgrade the storage capacity of water reservoir for fire suppression to 30 cubic meters as it is mentioned in Rwanda building code.\r\n3. To avail STP maintenance logbook\r\n4. To avail septic tank emptying logbook.\r\n5. To clean filters regularly.', NULL, NULL, 90.00, 95.00, 94.74, NULL, NULL, NULL, NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(363, NULL, 351, 3, 'building', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-22', 'new', NULL, 1, 'completed', 7, 'SENZIRA Eugene', 2, 'Entity does not comply with fire safety and security regulations', '1.To obtain and avail a valid occupational permit before resuming any activity at the premises \r\n2.To obtain and avail a valid tourism operation licence before resuming tourism related operations \r\n3.To stop temporary until you get all the recommended documents', NULL, NULL, 8.00, 63.00, 12.70, NULL, NULL, NULL, NULL, '2026-09-22 07:43:44', '2026-09-22 07:47:45', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(364, NULL, 352, 3, 'building', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-22', 'new', NULL, 1, 'completed', 8, 'NIYINGENERA Thierry', 1, NULL, 'To maintain water-based fire fighting system (make the pump automatic).\r\nTo maintain fire alarm system (it\'s control panel is disabled).\r\nTo add one fire extinguishers (CO2) on each floor (Accommodation area) and to make sure in other places all fire extinguishers are spaced at 15 m apart... in kitchen put wet chemical fire extinguisher.\r\nTo add lighting emergency exit signs in entire the premises.\r\nTo conduct regular fumigation by qualified personnel and maintain records.\r\nTo clean all floor, walls, work surface in kitchen and kitchen and replace old fridges.\r\nTo provide clearly labelled and appropriate covered bins for biodegradable and non-biodegradable waste.\r\nTo repair or replace the faulty kitchen chimney and install ventillation system.\r\nTo install CCTV Camera system which capture the  footages of entire compound with storage of at least 3 months.\r\nTo identify and rectify the source of bad odour from septic tank and continue regular emptying', NULL, NULL, 59.00, 69.00, 85.51, NULL, NULL, NULL, NULL, '2026-09-22 07:49:12', '2026-09-22 07:50:10', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(365, NULL, 353, 15, 'waste_water', 'stp', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-22', 'new', NULL, 1, 'draft', 22, 'MUGABO Serge', 1, NULL, NULL, NULL, NULL, 0.00, 0.00, 0.00, NULL, NULL, NULL, NULL, '2026-09-22 08:45:34', '2026-09-22 08:45:34', NULL, NULL, NULL, NULL, 'stp', NULL, 'activated_sludge', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(366, NULL, 354, 15, 'waste_water', 'stp', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-22', 'new', NULL, 1, 'completed', 23, 'MUNYANEZA Honeste', 3, '1. The STP effluent quality test results do not comply with the standard.\r\n2. Evidence of discharging STP effluent and laundry into the public drainage was observed.\r\n3. The system lacks grease traping.', '1. Immediately stop discharging STP effluent in the public drainage channel and seal completely the discharging pipe\r\n2. Set a grease trap for all kitchen water.\r\n3. Set a system of holding laundry water or treat them before discharging them.\r\n4. After STP restoration, cobduct STP effluent quality test for affirmation of further discharge and inform the city of Kigali', NULL, NULL, 12.00, 16.00, 75.00, NULL, NULL, NULL, NULL, '2026-09-22 09:03:42', '2026-09-22 09:03:42', 'KCPS-OP-AAA002866', 2021, 'Benjamin BAMBOA', '0785651648', 'stp', NULL, 'activated_sludge', NULL, 6000.00, 350, 78.00, 2021, '2026-09-21', '2026-09-21', 'monthly', 'functional', 'The system lacks grease trap.', '2026-07-28', 'WASAC Central Laboratory', 'public_drainage', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(367, NULL, 355, 3, 'building', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-22', 'new', NULL, 1, 'completed', 8, 'NIYINGENERA Thierry', 1, NULL, '* To install CCTV camera system which cover the entire compound with clear images and system storage of at least 3 months.\r\n * To maintain Fire Alarm system (its control panel is in off position).\r\n * To ensure all food handlers and kitchen staff obtain valid medical certificate from an authorized facility that check communicable diseases.\r\n * To label dust bins non-biodegradable and biodegradable.\r\n * To find valid electrical installation certificate.\r\n * To show all emptying records of sewage treatment plant no later than 30th/09/2026 to email: serge.mugabo@gasabo.gov.rw\r\n * To install access cover / manhole at STP.\r\n * To upgrade sewage treatment plant so that all stage function and keep maintenance records.\r\n * To work with licensed company for emptying activity / or desludging service provider.', NULL, NULL, 80.00, 88.00, 90.91, NULL, NULL, NULL, NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(368, NULL, 356, 3, 'building', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-22', 'new', NULL, 1, 'draft', 7, 'SENZIRA Eugene', 2, NULL, NULL, NULL, NULL, 0.00, 0.00, 0.00, NULL, NULL, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(369, NULL, 357, 16, 'waste_water', 'septic_tank', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-22', 'new', NULL, 1, 'completed', 24, 'UWERA Marie Josee', 2, 'They use soak pit and septic tank \r\nManhole cover for septic tank are not accessible', 'To upgrade wastewater management system by installing sewage treatment plant \r\n_ regular cleaning of grease trap', NULL, NULL, 5.00, 14.00, 35.71, NULL, NULL, NULL, NULL, '2026-09-22 11:34:44', '2026-09-22 12:19:29', 'Cok/2026_62149_25173', 2026, 'Martin Igirimbabazi', '0788593849', 'septic_tank', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(370, NULL, 358, 15, 'waste_water', 'stp', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-22', 'new', NULL, 1, 'draft', 23, 'MUNYANEZA Honeste', 3, '1. No test results were available on the site.\r\n2. The system lacks effective chlorination.\r\n3. The STP was currently discharging its effluent into the public drainage channel.\r\n4. Laundry water was directly being discharged into the public drainage channel', '1. Immediately stop the discharge of the STP effluent with unknown quality into the public drainage channel and arrange a regular emptying by vacuum trucks.\r\n2. Set a plan for holding laundry water instead of discharging it into the public drainage channel or either treat it before discharging.\r\n3. Set effective disinfection for the STP\r\n4. Submit the test results to the City of Kigali on info@kigali.gov.rw\r\n5. To stop any untreated discharge until corrections are made and approved by the test results\r\n6. To submit remaining information about the STP to the city of Kigali as soon as possible.', NULL, NULL, 7.00, 10.00, 70.00, NULL, NULL, NULL, NULL, '2026-09-22 14:15:55', '2026-09-22 14:15:55', 'KCPS-OP-AAA002339', 2018, 'Tim Brown', '078310270', 'stp', NULL, 'activated_sludge', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -13665,7 +13698,286 @@ INSERT INTO `inspection_answers` (`id`, `inspection_id`, `item_id`, `status`, `c
 (12278, 360, 363, 'yes', NULL, '2026-09-22 02:48:17', '2026-09-22 02:48:17'),
 (12279, 360, 364, 'no', NULL, '2026-09-22 02:48:17', '2026-09-22 02:48:17'),
 (12280, 360, 365, 'no', 'Bad odour, suspended solids in effluent', '2026-09-22 02:48:17', '2026-09-22 02:48:17'),
-(12281, 360, 366, 'yes', 'Drainage', '2026-09-22 02:48:17', '2026-09-22 02:48:17');
+(12281, 360, 366, 'yes', 'Drainage', '2026-09-22 02:48:17', '2026-09-22 02:48:17'),
+(12282, 361, 367, 'yes', NULL, '2026-09-22 07:17:54', '2026-09-22 07:17:54'),
+(12283, 361, 368, 'no', NULL, '2026-09-22 07:17:54', '2026-09-22 07:17:54'),
+(12284, 361, 369, 'yes', NULL, '2026-09-22 07:17:54', '2026-09-22 07:17:54'),
+(12285, 361, 370, 'yes', NULL, '2026-09-22 07:17:54', '2026-09-22 07:17:54'),
+(12286, 361, 371, 'no', NULL, '2026-09-22 07:17:54', '2026-09-22 07:17:54'),
+(12287, 361, 372, 'yes', NULL, '2026-09-22 07:17:54', '2026-09-22 07:17:54'),
+(12288, 361, 373, 'no', NULL, '2026-09-22 07:17:54', '2026-09-22 07:17:54'),
+(12289, 361, 374, 'yes', NULL, '2026-09-22 07:17:54', '2026-09-22 07:17:54'),
+(12290, 361, 375, 'yes', NULL, '2026-09-22 07:17:54', '2026-09-22 07:17:54'),
+(12291, 361, 376, 'yes', NULL, '2026-09-22 07:17:54', '2026-09-22 07:17:54'),
+(12292, 361, 377, 'no', NULL, '2026-09-22 07:17:54', '2026-09-22 07:17:54'),
+(12293, 361, 378, 'no', NULL, '2026-09-22 07:17:54', '2026-09-22 07:17:54'),
+(12294, 361, 379, 'yes', NULL, '2026-09-22 07:17:54', '2026-09-22 07:17:54'),
+(12295, 361, 380, 'yes', NULL, '2026-09-22 07:17:54', '2026-09-22 07:17:54'),
+(12296, 362, 92, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12297, 362, 93, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12298, 362, 94, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12299, 362, 95, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12300, 362, 96, 'no', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12301, 362, 97, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12302, 362, 98, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12303, 362, 99, 'no', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12304, 362, 100, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12305, 362, 101, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12306, 362, 102, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12307, 362, 103, 'na', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12308, 362, 104, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12309, 362, 105, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12310, 362, 106, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12311, 362, 107, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12312, 362, 108, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12313, 362, 109, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12314, 362, 110, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12315, 362, 111, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12316, 362, 112, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12317, 362, 113, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12318, 362, 114, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12319, 362, 115, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12320, 362, 116, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12321, 362, 117, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12322, 362, 118, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12323, 362, 119, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12324, 362, 120, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12325, 362, 121, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12326, 362, 122, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12327, 362, 123, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12328, 362, 124, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12329, 362, 125, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12330, 362, 126, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12331, 362, 127, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12332, 362, 128, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12333, 362, 129, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12334, 362, 130, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12335, 362, 131, 'yes', NULL, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(12336, 363, 92, 'yes', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12337, 363, 93, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12338, 363, 94, 'yes', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12339, 363, 95, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12340, 363, 96, 'na', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12341, 363, 97, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12342, 363, 98, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12343, 363, 99, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12344, 363, 100, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12345, 363, 101, 'na', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12346, 363, 102, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12347, 363, 103, 'na', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12348, 363, 104, 'na', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12349, 363, 105, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12350, 363, 106, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12351, 363, 107, 'na', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12352, 363, 108, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12353, 363, 109, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12354, 363, 110, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12355, 363, 111, 'na', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12356, 363, 112, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12357, 363, 113, 'no', 'To provide security screening equipment hand held metal detector,under search mirror and walkthrough', '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12358, 363, 114, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12359, 363, 115, 'yes', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12360, 363, 116, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12361, 363, 117, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12362, 363, 118, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12363, 363, 119, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12364, 363, 120, 'na', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12365, 363, 121, 'na', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12366, 363, 122, 'na', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12367, 363, 123, 'na', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12368, 363, 124, 'na', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12369, 363, 125, 'na', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12370, 363, 126, 'na', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12371, 363, 127, 'na', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12372, 363, 128, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12373, 363, 129, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12374, 363, 130, 'no', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12375, 363, 131, 'yes', NULL, '2026-09-22 07:43:44', '2026-09-22 07:43:44'),
+(12376, 364, 92, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12377, 364, 93, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12378, 364, 94, 'no', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12379, 364, 95, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12380, 364, 96, 'no', 'To install DSPA in server room', '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12381, 364, 97, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12382, 364, 98, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12383, 364, 99, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12384, 364, 100, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12385, 364, 101, 'na', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12386, 364, 102, 'no', 'To do maintenance of fire alarm system', '2026-09-22 07:49:12', '2026-09-22 07:50:10'),
+(12387, 364, 103, 'na', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12388, 364, 104, 'na', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12389, 364, 105, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12390, 364, 106, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12391, 364, 107, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12392, 364, 108, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12393, 364, 109, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12394, 364, 110, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12395, 364, 111, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12396, 364, 112, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12397, 364, 113, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12398, 364, 114, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12399, 364, 115, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12400, 364, 116, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12401, 364, 117, 'no', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12402, 364, 118, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12403, 364, 119, 'na', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12404, 364, 120, 'na', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12405, 364, 121, 'na', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12406, 364, 122, 'na', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12407, 364, 123, 'na', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12408, 364, 124, 'na', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12409, 364, 125, 'na', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12410, 364, 126, 'na', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12411, 364, 127, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12412, 364, 128, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12413, 364, 129, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12414, 364, 130, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12415, 364, 131, 'yes', NULL, '2026-09-22 07:49:12', '2026-09-22 07:49:12'),
+(12416, 365, 350, NULL, NULL, '2026-09-22 08:45:34', '2026-09-22 08:45:34'),
+(12417, 365, 351, NULL, NULL, '2026-09-22 08:45:34', '2026-09-22 08:45:34'),
+(12418, 365, 352, NULL, NULL, '2026-09-22 08:45:34', '2026-09-22 08:45:34'),
+(12419, 365, 353, NULL, NULL, '2026-09-22 08:45:34', '2026-09-22 08:45:34'),
+(12420, 365, 354, NULL, NULL, '2026-09-22 08:45:34', '2026-09-22 08:45:34'),
+(12421, 365, 355, NULL, NULL, '2026-09-22 08:45:34', '2026-09-22 08:45:34'),
+(12422, 365, 356, NULL, NULL, '2026-09-22 08:45:34', '2026-09-22 08:45:34'),
+(12423, 365, 357, NULL, NULL, '2026-09-22 08:45:34', '2026-09-22 08:45:34'),
+(12424, 365, 358, NULL, NULL, '2026-09-22 08:45:34', '2026-09-22 08:45:34'),
+(12425, 365, 359, NULL, NULL, '2026-09-22 08:45:34', '2026-09-22 08:45:34'),
+(12426, 365, 360, NULL, NULL, '2026-09-22 08:45:34', '2026-09-22 08:45:34'),
+(12427, 365, 361, NULL, NULL, '2026-09-22 08:45:34', '2026-09-22 08:45:34'),
+(12428, 365, 362, NULL, NULL, '2026-09-22 08:45:34', '2026-09-22 08:45:34'),
+(12429, 365, 363, NULL, NULL, '2026-09-22 08:45:34', '2026-09-22 08:45:34'),
+(12430, 365, 364, NULL, NULL, '2026-09-22 08:45:34', '2026-09-22 08:45:34'),
+(12431, 365, 365, NULL, NULL, '2026-09-22 08:45:34', '2026-09-22 08:45:34'),
+(12432, 365, 366, NULL, NULL, '2026-09-22 08:45:34', '2026-09-22 08:45:34'),
+(12433, 366, 350, 'yes', 'But not enough', '2026-09-22 09:03:42', '2026-09-22 09:03:42'),
+(12434, 366, 351, 'yes', NULL, '2026-09-22 09:03:42', '2026-09-22 09:03:42'),
+(12435, 366, 352, 'no', NULL, '2026-09-22 09:03:42', '2026-09-22 09:03:42'),
+(12436, 366, 353, 'yes', 'But not proved at all', '2026-09-22 09:03:42', '2026-09-22 09:03:42'),
+(12437, 366, 354, 'yes', NULL, '2026-09-22 09:03:42', '2026-09-22 09:03:42'),
+(12438, 366, 355, 'yes', NULL, '2026-09-22 09:03:42', '2026-09-22 09:03:42'),
+(12439, 366, 356, 'yes', NULL, '2026-09-22 09:03:42', '2026-09-22 09:03:42'),
+(12440, 366, 357, 'yes', NULL, '2026-09-22 09:03:42', '2026-09-22 09:03:42'),
+(12441, 366, 358, 'no', NULL, '2026-09-22 09:03:42', '2026-09-22 09:03:42'),
+(12442, 366, 359, 'yes', NULL, '2026-09-22 09:03:42', '2026-09-22 09:03:42'),
+(12443, 366, 360, 'yes', NULL, '2026-09-22 09:03:42', '2026-09-22 09:03:42'),
+(12444, 366, 361, 'yes', NULL, '2026-09-22 09:03:42', '2026-09-22 09:03:42'),
+(12445, 366, 362, 'yes', NULL, '2026-09-22 09:03:42', '2026-09-22 09:03:42'),
+(12446, 366, 363, 'no', NULL, '2026-09-22 09:03:42', '2026-09-22 09:03:42'),
+(12447, 366, 364, 'no', 'They are currently discharging', '2026-09-22 09:03:42', '2026-09-22 09:03:42'),
+(12448, 366, 365, 'na', NULL, '2026-09-22 09:03:42', '2026-09-22 09:03:42'),
+(12449, 366, 366, 'yes', NULL, '2026-09-22 09:03:42', '2026-09-22 09:03:42'),
+(12450, 367, 92, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12451, 367, 93, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12452, 367, 94, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12453, 367, 95, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12454, 367, 96, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12455, 367, 97, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12456, 367, 98, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12457, 367, 99, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12458, 367, 100, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12459, 367, 101, 'na', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12460, 367, 102, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12461, 367, 103, 'na', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12462, 367, 104, 'na', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12463, 367, 105, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12464, 367, 106, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12465, 367, 107, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12466, 367, 108, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12467, 367, 109, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12468, 367, 110, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12469, 367, 111, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12470, 367, 112, 'no', 'Ensurev that CCTV cameras captures all footages with atleast 3 months storage capacity', '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12471, 367, 113, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12472, 367, 114, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12473, 367, 115, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12474, 367, 116, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12475, 367, 117, 'no', 'To conduct electrical installation audit and obtain electrical installation compliance  certificate', '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12476, 367, 118, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12477, 367, 119, 'no', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12478, 367, 120, 'na', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12479, 367, 121, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12480, 367, 122, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12481, 367, 123, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12482, 367, 124, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12483, 367, 125, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12484, 367, 126, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12485, 367, 127, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12486, 367, 128, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12487, 367, 129, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12488, 367, 130, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12489, 367, 131, 'yes', NULL, '2026-09-22 11:19:35', '2026-09-22 11:19:35'),
+(12490, 368, 92, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12491, 368, 93, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12492, 368, 94, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12493, 368, 95, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12494, 368, 96, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12495, 368, 97, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12496, 368, 98, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12497, 368, 99, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12498, 368, 100, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12499, 368, 101, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12500, 368, 102, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12501, 368, 103, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12502, 368, 104, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12503, 368, 105, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12504, 368, 106, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12505, 368, 107, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12506, 368, 108, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12507, 368, 109, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12508, 368, 110, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12509, 368, 111, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12510, 368, 112, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12511, 368, 113, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12512, 368, 114, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12513, 368, 115, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12514, 368, 116, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12515, 368, 117, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12516, 368, 118, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12517, 368, 119, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12518, 368, 120, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12519, 368, 121, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12520, 368, 122, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12521, 368, 123, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12522, 368, 124, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12523, 368, 125, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12524, 368, 126, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12525, 368, 127, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12526, 368, 128, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12527, 368, 129, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12528, 368, 130, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12529, 368, 131, NULL, NULL, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(12530, 369, 367, 'yes', NULL, '2026-09-22 11:34:44', '2026-09-22 11:34:44'),
+(12531, 369, 368, 'yes', NULL, '2026-09-22 11:34:44', '2026-09-22 11:34:44'),
+(12532, 369, 369, 'yes', NULL, '2026-09-22 11:34:44', '2026-09-22 11:34:44'),
+(12533, 369, 370, 'yes', NULL, '2026-09-22 11:34:44', '2026-09-22 11:34:44'),
+(12534, 369, 371, 'yes', NULL, '2026-09-22 11:34:44', '2026-09-22 11:34:44'),
+(12535, 369, 372, 'no', NULL, '2026-09-22 11:34:44', '2026-09-22 11:34:44'),
+(12536, 369, 373, 'no', NULL, '2026-09-22 11:34:44', '2026-09-22 11:34:44'),
+(12537, 369, 374, 'no', NULL, '2026-09-22 11:34:44', '2026-09-22 11:34:44'),
+(12538, 369, 375, 'no', NULL, '2026-09-22 11:34:44', '2026-09-22 11:34:44'),
+(12539, 369, 376, 'no', NULL, '2026-09-22 11:34:44', '2026-09-22 11:34:44'),
+(12540, 369, 377, 'no', NULL, '2026-09-22 11:34:44', '2026-09-22 11:34:44'),
+(12541, 369, 378, 'no', NULL, '2026-09-22 11:34:44', '2026-09-22 11:34:44'),
+(12542, 369, 379, 'no', NULL, '2026-09-22 11:34:44', '2026-09-22 11:34:44'),
+(12543, 369, 380, 'no', NULL, '2026-09-22 11:34:44', '2026-09-22 11:34:44'),
+(12544, 370, 350, NULL, NULL, '2026-09-22 14:15:55', '2026-09-22 14:15:55'),
+(12545, 370, 351, NULL, NULL, '2026-09-22 14:15:55', '2026-09-22 14:15:55'),
+(12546, 370, 352, NULL, NULL, '2026-09-22 14:15:55', '2026-09-22 14:15:55'),
+(12547, 370, 353, NULL, NULL, '2026-09-22 14:15:55', '2026-09-22 14:15:55'),
+(12548, 370, 354, 'yes', NULL, '2026-09-22 14:15:55', '2026-09-22 14:15:55'),
+(12549, 370, 355, 'yes', NULL, '2026-09-22 14:15:55', '2026-09-22 14:15:55'),
+(12550, 370, 356, 'yes', NULL, '2026-09-22 14:15:55', '2026-09-22 14:15:55'),
+(12551, 370, 357, 'no', NULL, '2026-09-22 14:15:55', '2026-09-22 14:15:55'),
+(12552, 370, 358, 'yes', NULL, '2026-09-22 14:15:55', '2026-09-22 14:15:55'),
+(12553, 370, 359, 'yes', NULL, '2026-09-22 14:15:55', '2026-09-22 14:15:55'),
+(12554, 370, 360, 'yes', NULL, '2026-09-22 14:15:55', '2026-09-22 14:15:55'),
+(12555, 370, 361, 'no', NULL, '2026-09-22 14:15:55', '2026-09-22 14:15:55'),
+(12556, 370, 362, 'na', NULL, '2026-09-22 14:15:55', '2026-09-22 14:15:55'),
+(12557, 370, 363, 'na', NULL, '2026-09-22 14:15:55', '2026-09-22 14:15:55'),
+(12558, 370, 364, 'no', 'Discharging STP effluent without effective chlorination and valid test results', '2026-09-22 14:15:55', '2026-09-22 14:15:55'),
+(12559, 370, 365, 'na', NULL, '2026-09-22 14:15:55', '2026-09-22 14:15:55'),
+(12560, 370, 366, 'yes', NULL, '2026-09-22 14:15:55', '2026-09-22 14:15:55');
 
 -- --------------------------------------------------------
 
@@ -14119,7 +14431,19 @@ INSERT INTO `inspection_photos` (`id`, `inspection_id`, `path`, `original_name`,
 (400, 355, 'inspections/355/FsOenPJCRI6sjOtV1MxH6mW8MqapM0qL0Ore7dUQ.jpg', '20260921_121617.jpg', NULL, 0, 2075866, '2026-09-21 16:27:53', '2026-09-21 16:27:53'),
 (401, 357, 'inspections/357/eEtB4iXXMX6ymwf4kO8xoWH0gpe4m3vWjmui1zZ1.jpg', '20260921_123829.jpg', NULL, 0, 2085734, '2026-09-21 18:27:52', '2026-09-21 18:27:52'),
 (402, 357, 'inspections/357/RAgcwq8TlFJNOO7aI5DNpPBYgsyOQDZ4KqYi4xDL.jpg', '20260921_125816.jpg', NULL, 1, 1781929, '2026-09-21 18:27:53', '2026-09-21 18:27:53'),
-(403, 359, 'inspections/359/ry9aiIkpfgSM4JYbHlMkJmkJrbhMAqm9xIFw90CJ.jpg', '20260921_155920.jpg', NULL, 0, 2530974, '2026-09-21 18:42:24', '2026-09-21 18:42:24');
+(403, 359, 'inspections/359/ry9aiIkpfgSM4JYbHlMkJmkJrbhMAqm9xIFw90CJ.jpg', '20260921_155920.jpg', NULL, 0, 2530974, '2026-09-21 18:42:24', '2026-09-21 18:42:24'),
+(404, 363, 'inspections/363/AzL3uekkUXxB0yRR0Twdxac2bokNFSkDhuDN1Akb.jpg', '1790069942590252698115219992486.jpg', NULL, 0, 4037185, '2026-09-22 07:43:48', '2026-09-22 07:43:48'),
+(405, 363, 'inspections/363/znJoWlIr4044vJB70Jly7cJT70QcuYGME0ALA7xh.jpg', '17900699659781823134319917460752.jpg', NULL, 1, 3364189, '2026-09-22 07:43:51', '2026-09-22 07:43:51'),
+(406, 363, 'inspections/363/vmxhWNeKpNECENWhUVBXqAbnbp897TCO835ilAZq.jpg', '17900699906341793542150227476471.jpg', NULL, 2, 4451762, '2026-09-22 07:43:56', '2026-09-22 07:43:56'),
+(407, 364, 'inspections/364/4z8odwfX8qfx91Ib67JJ6PLwRFnErip1S5WlY2Wz.jpg', 'IMG-20260922-WA0002.jpg', NULL, 0, 85618, '2026-09-22 07:50:57', '2026-09-22 07:50:57'),
+(408, 364, 'inspections/364/pi2a2jlYrpxtcaxRvzbAkNRVMPdeWv3416mk7ecF.jpg', 'IMG-20260922-WA0003.jpg', NULL, 1, 295038, '2026-09-22 07:50:57', '2026-09-22 07:50:57'),
+(409, 366, 'inspections/366/MhVOa7R3qBrGSGtffKmIkaaTLzQLEF6wAp6swnW2.jpg', 'IMG_20260922_112931_077.jpg', NULL, 0, 4429161, '2026-09-22 09:16:13', '2026-09-22 09:16:13'),
+(410, 366, 'inspections/366/i6XSWrqsGwrf5mZuOaW0fJrpKk0Cxr58BhcR2RRq.jpg', 'IMG_20260922_112834_328.jpg', NULL, 1, 4735296, '2026-09-22 09:16:18', '2026-09-22 09:16:18'),
+(411, 366, 'inspections/366/fdTYmnR1tvnNWfNDkcYJYiFiyz2KyiwhN7UQNy30.jpg', 'IMG_20260922_112938_434.jpg', NULL, 2, 4940464, '2026-09-22 09:16:23', '2026-09-22 09:16:23'),
+(412, 367, 'inspections/367/3QzlVVDg4gHIEVpbNFIlM8skH21KmWd448GPCfI1.jpg', 'IMG-20260922-WA0006.jpg', NULL, 0, 183848, '2026-09-22 11:20:34', '2026-09-22 11:20:34'),
+(413, 367, 'inspections/367/Gn0P8zfh0NqD5NLFR7Vnbzomvrezh05f3MHTgkp7.jpg', 'IMG-20260922-WA0008.jpg', NULL, 1, 245753, '2026-09-22 11:20:34', '2026-09-22 11:20:34'),
+(414, 367, 'inspections/367/rFEw7HRGdWrpqJRbvripkgGlNUKV1EOoNZOGmV7O.jpg', 'IMG-20260922-WA0007.jpg', NULL, 2, 329165, '2026-09-22 11:20:35', '2026-09-22 11:20:35'),
+(415, 369, 'inspections/369/oT2B7COccM2nWtVelnFmZUBUngxbywH6jmumDTbj.jpg', '1003214910.jpg', NULL, 0, 3031689, '2026-09-22 12:13:08', '2026-09-22 12:13:08');
 
 -- --------------------------------------------------------
 
@@ -14722,7 +15046,23 @@ INSERT INTO `inspection_team` (`id`, `inspection_id`, `user_id`, `name`, `positi
 (1289, 357, NULL, 'MUNYANEZA Honeste', 'Hygiene, Sanitation and Environment Inspector (HSEI)', 'City of Kigali', 0, '2026-09-22 05:17:01', '2026-09-22 05:17:01'),
 (1290, 359, NULL, 'UWIKUNDA Idesbald', 'Electrical and Mechanical Inspector', 'City of Kigali', 1, '2026-09-22 05:28:57', '2026-09-22 05:28:57'),
 (1291, 359, NULL, 'Eng.IGIHOZO Honorine', 'Building Inspector', 'City of Kigali', 0, '2026-09-22 05:28:57', '2026-09-22 05:28:57'),
-(1292, 359, NULL, 'MUNYANEZA Honeste', 'Hygiene, Sanitation and Environment Inspector (HSEI)', 'City of Kigali', 0, '2026-09-22 05:28:57', '2026-09-22 05:28:57');
+(1292, 359, NULL, 'MUNYANEZA Honeste', 'Hygiene, Sanitation and Environment Inspector (HSEI)', 'City of Kigali', 0, '2026-09-22 05:28:57', '2026-09-22 05:28:57'),
+(1293, 361, NULL, 'MUGABO Serge', 'Hygiene, Sanitation and Environment Inspector (HSEI)', 'City of Kigali', 1, '2026-09-22 07:17:54', '2026-09-22 07:17:54'),
+(1294, 362, NULL, 'NIYINGENERA Thierry', 'Electrical and Mechanical Inspector', 'City of Kigali', 1, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(1295, 362, NULL, 'MUGABO Serge', 'Hygiene, Sanitation and Environment Inspector (HSEI)', 'City of Kigali', 0, '2026-09-22 07:31:52', '2026-09-22 07:31:52'),
+(1301, 363, NULL, 'SENZIRA Eugene', 'Electrical and Mechanical Inspector', 'City of Kigali', 1, '2026-09-22 07:47:45', '2026-09-22 07:47:45'),
+(1302, 363, NULL, 'MUKAMARIZA AIMÉE', 'Building and Infrastructure Inspector', 'City of Kigali', 0, '2026-09-22 07:47:45', '2026-09-22 07:47:45'),
+(1303, 363, NULL, 'UWERA MARIE JOSEÈ', 'Hygiene, Sanitation and Environment Inspector (HSEI)', 'City of Kigali', 0, '2026-09-22 07:47:45', '2026-09-22 07:47:45'),
+(1304, 363, NULL, 'SGT KAYINAMURA ABDUL', 'Electrical and Mechanical Inspector', 'RNP FIRE BRIGADE', 0, '2026-09-22 07:47:45', '2026-09-22 07:47:45'),
+(1305, 363, NULL, 'AIP YVETTE MUTESI', NULL, 'RNP', 0, '2026-09-22 07:47:45', '2026-09-22 07:47:45'),
+(1310, 364, NULL, 'NSENGIMANA Private', 'Electrical and Mechanical Inspector', 'City of Kigali', 1, '2026-09-22 07:50:57', '2026-09-22 07:50:57'),
+(1311, 364, NULL, 'MUGABO Serge', 'Hygiene, Sanitation and Environment Inspector (HSEI)', 'City of Kigali', 0, '2026-09-22 07:50:57', '2026-09-22 07:50:57'),
+(1312, 365, NULL, 'MUGABO Serge', NULL, 'City of Kigali', 1, '2026-09-22 08:45:34', '2026-09-22 08:45:34'),
+(1317, 367, NULL, 'NSENGIMANA Private', 'Electrical and Mechanical Inspector', 'City of Kigali', 1, '2026-09-22 11:20:38', '2026-09-22 11:20:38'),
+(1318, 367, NULL, 'MUGABO Serge', 'Hygiene, Sanitation and Environment Inspector (HSEI)', 'City of Kigali', 0, '2026-09-22 11:20:38', '2026-09-22 11:20:38'),
+(1319, 368, NULL, 'SENZIRA Eugene', NULL, 'City of Kigali', 1, '2026-09-22 11:27:29', '2026-09-22 11:27:29'),
+(1322, 369, NULL, 'UWERA Marie Josee', 'Hygiene, Sanitation and Environment Inspector (HSEI)', 'City of Kigali', 1, '2026-09-22 12:19:29', '2026-09-22 12:19:29'),
+(1323, 370, NULL, 'MUNYANEZA Honeste', NULL, 'City of Kigali', 1, '2026-09-22 14:15:55', '2026-09-22 14:15:55');
 
 -- --------------------------------------------------------
 
@@ -15167,14 +15507,20 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('2L8yRivq2MUGXZ0fvR42Itk9Qinv5NyP1R3S1D0S', 23, '197.157.184.36', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Mobile Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiemtPRkZqbDRuQ2tGQWd1NUNSNU9ueDMwMk81dkdHN2tkUmVMMzVEaCI7czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MjM7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NTg6Imh0dHBzOi8vZW5vdGlmaWVybHRkLnJ3L2luc3BlY3QvaW5zcGVjdGlvbi93YXN0ZV93YXRlci9uZXciO3M6NToicm91dGUiO3M6MTc6Imluc3BlY3Rpb24uY3JlYXRlIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319fQ==', 1790068108),
-('AGpvyt7ghgcIeY4WmPW1V8ZjAB8IgC3wUQgLTwdG', NULL, '74.125.208.167', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36 (compatible; Google-Read-Aloud; +https://support.google.com/webmasters/answer/1061943)', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoidVc4anh6TjhHbmlwVVJ4T1M4OUVxRmNBSlhiUHRaTk14eW9nb0VPZCI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czo1NToiaHR0cHM6Ly9lbm90aWZpZXJsdGQucncvaW5zcGVjdC9pbnNwZWN0aW9uL2J1aWxkaW5nL25ldyI7fXM6OToiX3ByZXZpb3VzIjthOjI6e3M6MzoidXJsIjtzOjU1OiJodHRwczovL2Vub3RpZmllcmx0ZC5ydy9pbnNwZWN0L2luc3BlY3Rpb24vYnVpbGRpbmcvbmV3IjtzOjU6InJvdXRlIjtzOjE3OiJpbnNwZWN0aW9uLmNyZWF0ZSI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1790067716),
-('HsiDhb9C6R21a1326oajF5gjG7e77rh9IXsQW2UO', NULL, '197.157.187.72', 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:24.0) Gecko/20100101 Firefox/24.0 Chrome/80.0.3987.132 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiQ0NEbmFRdk1ZbW85dnV2UFFLd0xCRWNmalpleUxKS0RLSFFYSWJmTSI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czo1ODoiaHR0cHM6Ly9lbm90aWZpZXJsdGQucncvaW5zcGVjdC9pbnNwZWN0aW9uL3dhc3RlX3dhdGVyL25ldyI7fXM6OToiX3ByZXZpb3VzIjthOjI6e3M6MzoidXJsIjtzOjM3OiJodHRwczovL2Vub3RpZmllcmx0ZC5ydy9pbnNwZWN0L2xvZ2luIjtzOjU6InJvdXRlIjtzOjU6ImxvZ2luIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319fQ==', 1790063448),
-('m3pqbU12FFDxbsK0huwreJCamJWs1CVT5pGFpcpj', 22, '197.157.187.72', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/30.0 Chrome/143.0.0.0 Mobile Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiN1ptOHhHcXNLM3IwRkxmdXZFSVlvSmQyYTBudFNYbXBGYmRYckhqZiI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjI6e3M6MzoidXJsIjtzOjU4OiJodHRwczovL2Vub3RpZmllcmx0ZC5ydy9pbnNwZWN0L2luc3BlY3Rpb24vd2FzdGVfd2F0ZXIvbmV3IjtzOjU6InJvdXRlIjtzOjE3OiJpbnNwZWN0aW9uLmNyZWF0ZSI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjIyO30=', 1790063401),
-('tGZDQEckvIFCLTbDbhiOaTJnWBEhzKmlp7eZFzKx', 9, '197.243.113.194', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiSXdLeW9PTjhSbjFzelhRUENhMEFXTHhCTU5LOHptRnhldVhFc1l2MCI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjI6e3M6MzoidXJsIjtzOjQ3OiJodHRwczovL2Vub3RpZmllcmx0ZC5ydy9pbnNwZWN0L2luc3BlY3Rpb25zLzM1OSI7czo1OiJyb3V0ZSI7czoxNToiaW5zcGVjdGlvbi5zaG93Ijt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6OTt9', 1790062137),
-('tMBxx0SsjCDN5cYNlbs58tMvmUwVvDdZGysrcga9', NULL, '74.125.208.167', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36 (compatible; Google-Read-Aloud; +https://support.google.com/webmasters/answer/1061943)', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiOTFMMWpGemVacjRrN2xDNWJycTJlcWVJTGhMTHQ0Nk9kazd4VUxMcCI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6Mzc6Imh0dHBzOi8vZW5vdGlmaWVybHRkLnJ3L2luc3BlY3QvbG9naW4iO3M6NToicm91dGUiO3M6NToibG9naW4iO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX19', 1790067716),
-('U8W09fs4nbmFI6K9qOxuV5Ud2z1qSStjsYkP0S55', NULL, '197.243.113.114', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoidTVaNVU1Y1BKOUZnWkNUMDZuU2NUYXQ1c3QyblZXUXNremhVMjB3WiI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czozMToiaHR0cHM6Ly9lbm90aWZpZXJsdGQucncvaW5zcGVjdCI7fXM6OToiX3ByZXZpb3VzIjthOjI6e3M6MzoidXJsIjtzOjM3OiJodHRwczovL2Vub3RpZmllcmx0ZC5ydy9pbnNwZWN0L2xvZ2luIjtzOjU6InJvdXRlIjtzOjU6ImxvZ2luIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319fQ==', 1790065671),
-('Zv6ufzZozaE7X9ugNFT1lbIaOhWdiKZwVUncWUgf', 7, '41.186.135.50', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiS0ZwQXFpcVRJQ21laGpQRUF5Q21JTnRaZWRxWWR6Uk9hMWQ0eW5GbCI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NTU6Imh0dHBzOi8vZW5vdGlmaWVybHRkLnJ3L2luc3BlY3QvaW5zcGVjdGlvbi9idWlsZGluZy9uZXciO3M6NToicm91dGUiO3M6MTc6Imluc3BlY3Rpb24uY3JlYXRlIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6Nzt9', 1790067714);
+('3ohK5BuVdaXtwMXbGVDQXRXSWMLDK3Z3EU7Vty2r', NULL, '197.243.113.194', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:156.0) Gecko/20100101 Firefox/156.0', 'YToyOntzOjY6Il90b2tlbiI7czo0MDoiRXR1cDhWVjdUVFFwQlpVTU9EOFZKSlZlOE1LZm4yS0NxWlNzbVRiUiI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319fQ==', 1790092549),
+('564Y9et4RkvzwNDDUlz9ZJj8GOA5OphAKWT7ivew', NULL, '41.186.133.2', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', 'YToyOntzOjY6Il90b2tlbiI7czo0MDoiandlMjNGTU1wTW5zYjlBem5OVDVYMG1XWll0MW1pOHhBdjB5MDNMZCI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319fQ==', 1790096477),
+('7g1IuPMw1qTu81BdVRJyiz0OmpFY7Y0cgBcO1ECd', 24, '197.157.155.227', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiUkRUNmwzQ0FqTXlZVk82OWRud09hRmNGaEVTd2lINmNxczUyd3hTNyI7czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MjQ7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NDA6Imh0dHBzOi8vZW5vdGlmaWVybHRkLnJ3L2luc3BlY3QvcGFzc3dvcmQiO3M6NToicm91dGUiO3M6MTM6InBhc3N3b3JkLmVkaXQiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX19', 1790147235),
+('8H7RiCu6OH8k7NxNw0F2Q68V7Qaqxf0I5i2TWvUa', NULL, '74.125.208.167', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36 (compatible; Google-Read-Aloud; +https://support.google.com/webmasters/answer/1061943)', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiYmJHMGtSYThnQU1INzByZXBjWkVmT0xxTmExbFRjMnNjZGVYNTlDeiI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czo1NToiaHR0cHM6Ly9lbm90aWZpZXJsdGQucncvaW5zcGVjdC9pbnNwZWN0aW9uL2J1aWxkaW5nL25ldyI7fXM6OToiX3ByZXZpb3VzIjthOjI6e3M6MzoidXJsIjtzOjU1OiJodHRwczovL2Vub3RpZmllcmx0ZC5ydy9pbnNwZWN0L2luc3BlY3Rpb24vYnVpbGRpbmcvbmV3IjtzOjU6InJvdXRlIjtzOjE3OiJpbnNwZWN0aW9uLmNyZWF0ZSI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1790093143),
+('dywPJN7X87EN0Ulrzlcvc6npUlxtmvYqy1CeL9Tp', NULL, '197.157.186.161', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/30.0 Chrome/143.0.0.0 Mobile Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoieXdXUjFmQVBmRDZaVEFub2RIM2Y4dDdDM0JKdlRnUTNyT3Ruc2RhbSI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czozMToiaHR0cHM6Ly9lbm90aWZpZXJsdGQucncvaW5zcGVjdCI7fXM6OToiX3ByZXZpb3VzIjthOjI6e3M6MzoidXJsIjtzOjM3OiJodHRwczovL2Vub3RpZmllcmx0ZC5ydy9pbnNwZWN0L2xvZ2luIjtzOjU6InJvdXRlIjtzOjU6ImxvZ2luIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319fQ==', 1790149679),
+('f58hRDNp4ih15mCtQgwMy2H5M7VY5kVTWsnSAfBR', 24, '197.157.155.227', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiV2dhYUY0N2ljd2pGb1NaYzg5akFGN3dxdGRKUXAzNmNHcnkwMDJPNSI7czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MjQ7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NDA6Imh0dHBzOi8vZW5vdGlmaWVybHRkLnJ3L2luc3BlY3QvcGFzc3dvcmQiO3M6NToicm91dGUiO3M6MTM6InBhc3N3b3JkLmVkaXQiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX19', 1790147390),
+('fH9byjtQUbiAfuBbLGhotJoAYttwnUSxr6KUQLd0', NULL, '41.186.133.2', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiNkJGNDFubW5LTHAxeVB3NWtqUHJjRHdTM1d5QlFIY1dzNHVxWE85UiI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czozMToiaHR0cHM6Ly9lbm90aWZpZXJsdGQucncvaW5zcGVjdCI7fXM6OToiX3ByZXZpb3VzIjthOjI6e3M6MzoidXJsIjtzOjM3OiJodHRwczovL2Vub3RpZmllcmx0ZC5ydy9pbnNwZWN0L2xvZ2luIjtzOjU6InJvdXRlIjtzOjU6ImxvZ2luIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319fQ==', 1790096054),
+('g96gGhxjBDEfVt9lcWydsa1JrnFnz6ydy1Osxmkv', NULL, '41.186.135.51', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoickpWU3B5czdxc0xUTnhLWkZjZnhNamFjY2RlQ2tPOXRoSnM5T3FqViI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czozMToiaHR0cHM6Ly9lbm90aWZpZXJsdGQucncvaW5zcGVjdCI7fXM6OToiX3ByZXZpb3VzIjthOjI6e3M6MzoidXJsIjtzOjM3OiJodHRwczovL2Vub3RpZmllcmx0ZC5ydy9pbnNwZWN0L2xvZ2luIjtzOjU6InJvdXRlIjtzOjU6ImxvZ2luIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319fQ==', 1790092986),
+('mFyzWoa45nTdiBp25xg8zif29TOyG5NOTLpa30Vf', NULL, '41.186.132.145', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiRkVyQ2l0bm85YllPZXE4SUEwanp4QXZER0NTVlV0TVV3RGZoVUphYSI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czozMToiaHR0cHM6Ly9lbm90aWZpZXJsdGQucncvaW5zcGVjdCI7fXM6OToiX3ByZXZpb3VzIjthOjI6e3M6MzoidXJsIjtzOjM3OiJodHRwczovL2Vub3RpZmllcmx0ZC5ydy9pbnNwZWN0L2xvZ2luIjtzOjU6InJvdXRlIjtzOjU6ImxvZ2luIjt9fQ==', 1790093515),
+('PMTHiFSYeU9h08a93Y1jpniepod9ItJyYnTxXQlw', 10, '41.186.133.2', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiMkh0bXZ0NzJia3JJRUJSbVJCbnRDTXg0RE15OEc4TXhsbHkzUDBYcCI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJuZXciO2E6MDp7fXM6Mzoib2xkIjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6Mzc6Imh0dHBzOi8vZW5vdGlmaWVybHRkLnJ3L2luc3BlY3QvdXNlcnMiO3M6NToicm91dGUiO3M6MTE6InVzZXJzLmluZGV4Ijt9czozOiJ1cmwiO2E6MDp7fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjEwO30=', 1790098007),
+('SuVvLJBugnyLQYmBDwSR7kLxRUCI3D5ocbvL6ZPS', NULL, '74.125.208.168', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36 (compatible; Google-Read-Aloud; +https://support.google.com/webmasters/answer/1061943)', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiTmZGVWFrWUNIUk1pYWVXU29QRWU3c1BWVks3SVpMbmc3V3NLcXByQyI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6Mzc6Imh0dHBzOi8vZW5vdGlmaWVybHRkLnJ3L2luc3BlY3QvbG9naW4iO3M6NToicm91dGUiO3M6NToibG9naW4iO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX19', 1790093143),
+('vd8BlB2PWpHOUqWK5IJ3PAxnZWSZqoXocxP1ug3p', NULL, '197.157.187.174', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/30.0 Chrome/143.0.0.0 Mobile Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiRmxpQ3h6dzAxaHBmT3h0WGlZMng2YjVnREoyemZqQ0xQVkZuVG9zeSI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czozMToiaHR0cHM6Ly9lbm90aWZpZXJsdGQucncvaW5zcGVjdCI7fXM6OToiX3ByZXZpb3VzIjthOjI6e3M6MzoidXJsIjtzOjM3OiJodHRwczovL2Vub3RpZmllcmx0ZC5ydy9pbnNwZWN0L2xvZ2luIjtzOjU6InJvdXRlIjtzOjU6ImxvZ2luIjt9fQ==', 1790110967),
+('W9LurqUBEUWGK6ofiaDdO0q9gwp5JvYW6iizmL5k', NULL, '197.157.186.161', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/30.0 Chrome/143.0.0.0 Mobile Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiZGh0ZXpEQW5WZnB4a3JsRGZUM1ZaNDJXNmFCbE9hWTl4TUU3Rm1kNyI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czozMToiaHR0cHM6Ly9lbm90aWZpZXJsdGQucncvaW5zcGVjdCI7fXM6OToiX3ByZXZpb3VzIjthOjI6e3M6MzoidXJsIjtzOjM3OiJodHRwczovL2Vub3RpZmllcmx0ZC5ydy9pbnNwZWN0L2xvZ2luIjtzOjU6InJvdXRlIjtzOjU6ImxvZ2luIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319fQ==', 1790140811),
+('ZMg8OQ6PL8sgjx4q6h14A4NPvWihJHS2OOZVokpK', 17, '41.186.136.90', 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiUlZqSktVZDMyUVNUYVdCclBZOUxrNERUV3dpa0s0VjRYdzVLNFNDRyI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NTI6Imh0dHBzOi8vZW5vdGlmaWVybHRkLnJ3L2luc3BlY3QvaW5zcGVjdGlvbnMvMzYzL3dvcmQiO3M6NToicm91dGUiO3M6MTU6Imluc3BlY3Rpb24ud29yZCI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjE3O30=', 1790148002);
 
 -- --------------------------------------------------------
 
@@ -15209,25 +15555,25 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `name`, `email`, `district_id`, `employee_number`, `position`, `phone`, `signature_path`, `signature_registered_at`, `is_active`, `must_change_password`, `password_changed_at`, `last_login_at`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`) VALUES
 (3, 'RUKUNDO Emmanuel', 'emmanuel.rukundo@gasabo.gov.rw', 1, NULL, NULL, NULL, NULL, NULL, 1, 1, NULL, '2026-09-19 04:54:55', NULL, '$2y$12$5qoh6614ewJeVGl7wnqPu.ccaF1Vtkwr.mfGxW3ceyCKBeTElBuXq', NULL, '2026-08-06 09:02:24', '2026-09-19 04:54:55'),
-(7, 'SENZIRA Eugene', 'eugene.senzira@kicukiro.gov.rw', 2, NULL, 'Electrical and Mechanical Inspector', '0789697121', 'signatures/7-20260910133732.png', '2026-09-10 11:37:32', 1, 0, '2026-08-10 05:58:40', '2026-09-22 07:01:37', NULL, '$2y$12$595SyXPTlUK/6eA8IjRWHehRxEl.SWu6v0hPQj.WdfDtll4YWn/YO', 'S4BaVLzXJQ98dt8guojk4EzCrTqrBlNyEEZjSnjAxtX1N4xeWcvKwFXX1HiK', '2026-08-06 09:02:25', '2026-09-22 07:01:37'),
-(8, 'NIYINGENERA Thierry', 'thiery.niyingenera@gasabo.gov.rw', 1, NULL, 'Electrical and Mechanical Inspector', '0785841469', 'signatures/8-20260908074635.png', '2026-09-08 05:46:35', 1, 0, '2026-08-11 07:06:45', '2026-09-18 10:44:17', NULL, '$2y$12$YcG2gF1TOcZCgXL5LXN3e.qhq.pK2OsBFWDy29/P0j74qJfuDQH1y', 'ErqprtF2zVrUgEpWj2LQsDTEDlrF0bvqoEecFfa2I17hiQXeTPYjqtSxH3u4', '2026-08-06 09:02:25', '2026-09-18 10:44:17'),
-(9, 'UWIKUNDA Idesbald', 'idesbald.uwikunda@nyarugenge.gov.rw', 3, '2207043636', 'Electrical and Mechanical Inspector', '0785 066 957', 'signatures/0pL2Zvvbz6J1K1uj6OwnjdslVDnHJTWhr7wdnyT5.jpg', '2026-08-13 15:47:47', 1, 0, '2026-08-10 06:00:12', '2026-09-22 05:10:17', NULL, '$2y$12$sfTYwkhsFTL7p9SDUkk2ce5GjaLA4tRou2/6GvVsV3Xt6OaAye2I6', 'iyssukKaiu5HpKK8Tj1FVh4XouF9LVaqMZMccc0afVXxpfC2ugjDYx7Z10Wh', '2026-08-06 09:02:25', '2026-09-22 05:10:17'),
-(10, 'System Administrator', 'admin@kigalicity.gov.rw', NULL, NULL, NULL, NULL, NULL, NULL, 1, 0, '2026-08-06 10:59:05', '2026-09-21 03:42:55', NULL, '$2y$12$DNDEKLHr/00wVmI7Fk0U/etR9qxx7aws7APHIYCZ2JGoBtjKlgmn6', 'KcAgU9gAFP6Ly8iNWvgMLqgnASILmDFe2ymMvKzjmB2u1Nem7LYQNfBZxO8G', '2026-08-06 09:02:25', '2026-09-21 03:42:55'),
-(11, 'NDAYISENGA Jean Bosco', 'bosco@cok.gov.rw', NULL, NULL, 'Senior Building Inspector', '0788693221', NULL, NULL, 1, 0, NULL, '2026-09-21 18:18:18', NULL, '$2y$12$y2qKxdBXsKm3km7KIeqbiehQGpQqpJ4SCCp5SivAV1/TpiC1xyu0a', 'EGLUg9AOWVcxurVDUZyIA0wSG792ZC9avcRvq0erhQmMZkSUaxYnPRj8hzUf', '2026-08-06 09:24:21', '2026-09-21 18:18:18'),
+(7, 'SENZIRA Eugene', 'eugene.senzira@kicukiro.gov.rw', 2, NULL, 'Electrical and Mechanical Inspector', '0789697121', 'signatures/7-20260910133732.png', '2026-09-10 11:37:32', 1, 1, NULL, '2026-09-22 07:01:37', NULL, '$2y$12$go7fH9rBtxI0o.cuISgKXeupX1y59/VRjP9Bezjubpbrxkoyd3dP.', 'S4BaVLzXJQ98dt8guojk4EzCrTqrBlNyEEZjSnjAxtX1N4xeWcvKwFXX1HiK', '2026-08-06 09:02:25', '2026-09-22 15:25:01'),
+(8, 'NIYINGENERA Thierry', 'thiery.niyingenera@gasabo.gov.rw', 1, NULL, 'Electrical and Mechanical Inspector', '0785841469', 'signatures/8-20260908074635.png', '2026-09-08 05:46:35', 1, 1, NULL, '2026-09-22 11:19:59', NULL, '$2y$12$iALlZ9fPIjntOo3zHm9M7.6HMUVoWtE4Hx9zHHtIL5iqp0TbVKX1W', 'ErqprtF2zVrUgEpWj2LQsDTEDlrF0bvqoEecFfa2I17hiQXeTPYjqtSxH3u4', '2026-08-06 09:02:25', '2026-09-22 15:24:07'),
+(9, 'UWIKUNDA Idesbald', 'idesbald.uwikunda@nyarugenge.gov.rw', 3, '2207043636', 'Electrical and Mechanical Inspector', '0785 066 957', 'signatures/0pL2Zvvbz6J1K1uj6OwnjdslVDnHJTWhr7wdnyT5.jpg', '2026-08-13 15:47:47', 1, 1, NULL, '2026-09-22 14:05:45', NULL, '$2y$12$zRroHLQNzpHA8qDIyGbw9OjuO3UcEe5eJ8lOqJxifzF4MVooID/Va', 'aCKvy4Tkro70r5T5DJkKY2JCZxrBWa4deRHylxnB1aKTQkeywZ9aFG0uHj09', '2026-08-06 09:02:25', '2026-09-22 15:25:42'),
+(10, 'System Administrator', 'admin@kigalicity.gov.rw', NULL, NULL, NULL, NULL, NULL, NULL, 1, 0, '2026-08-06 10:59:05', '2026-09-22 15:19:20', NULL, '$2y$12$DNDEKLHr/00wVmI7Fk0U/etR9qxx7aws7APHIYCZ2JGoBtjKlgmn6', 'KcAgU9gAFP6Ly8iNWvgMLqgnASILmDFe2ymMvKzjmB2u1Nem7LYQNfBZxO8G', '2026-08-06 09:02:25', '2026-09-22 15:19:20'),
+(11, 'NDAYISENGA Jean Bosco', 'bosco@cok.gov.rw', NULL, NULL, 'Senior Building Inspector', '0788693221', NULL, NULL, 1, 1, NULL, '2026-09-22 11:42:53', NULL, '$2y$12$ML5ZBoDQFvqeeljx6Aa.q.9PTt4eqz91FGA66ReOXpapFH8xrrN8a', 'EGLUg9AOWVcxurVDUZyIA0wSG792ZC9avcRvq0erhQmMZkSUaxYnPRj8hzUf', '2026-08-06 09:24:21', '2026-09-22 15:26:20'),
 (12, 'Secretary', 'secretary@kigalicity.gov.rw', NULL, NULL, NULL, NULL, NULL, NULL, 1, 0, '2026-08-08 15:10:54', '2026-08-24 11:30:19', NULL, '$2y$12$Kc7XLBpDTMfnkJLR91r3/eMY01Jw8keIuo5IVUhMrryngEZBCBs0W', 'Ag8jRl0lhpkIwREi0vSC4rzLrfgKhvuHwjwv6DuKv1GRaBAMsrnf8CffckJx', '2026-08-06 10:55:30', '2026-08-24 11:30:19'),
 (13, 'Recovery Officer', 'recovery@kigalicity.gov.rw', NULL, NULL, NULL, NULL, NULL, NULL, 1, 0, '2026-08-09 02:57:56', '2026-08-24 11:38:39', NULL, '$2y$12$hpAv2O8iFJ//pNK6576HcuxjI/UbjhHxCHJSXMHULvupevTNNq1TC', 'UIOvRXmSALQNuDdK8B9IgKGPFcgmWy8LMCHgTWNy1T2YIinkbSctkJhIGSLm', '2026-08-06 10:55:30', '2026-08-24 11:38:39'),
-(14, 'ITANGISHAKA Fidele', 'itangfidele@gmail.com', 2, NULL, 'Electrical and Mechanical Inspector', '0782253882', 'signatures/14-20260812101117.png', '2026-08-12 08:11:17', 1, 0, NULL, '2026-09-15 05:48:54', NULL, '$2y$12$uMR5lrSWII0r/UysdG2FCOQMaBwiPy3iT4E/nzKCACOH9clhrfypG', 'kDbbZKVcUhESGqbuf3m6AKl1BOExo6k3H0t4rFrqJtGl96oR17u2fppCDOTo', '2026-08-06 11:09:31', '2026-09-15 05:48:54'),
-(16, 'RUKUNDO Augustin', 'arukundo@kigalicity.gov.rw', NULL, NULL, 'Hygiene and Sanitation Specialist', '0782756565', 'signatures/n55xIy1SZ72mHemkPohT80C9SV2WgC8O4bCG7dM6.jpg', '2026-08-30 08:11:02', 1, 0, NULL, '2026-09-21 17:51:08', NULL, '$2y$12$K6DvfbIpv8yM9srlMHGiW.KAWW1Rw1PPBaKvdTi8DM6w9iXfVxRTG', '4RpJyvFMMcLhM4g4AQgsMoxWiSHzIfJ1vjO0zhV5kaNh2AlQGdTMCZVUhZH5', '2026-08-06 11:34:33', '2026-09-21 17:51:08'),
-(17, 'Eng. BAGAMBIKI Hubert', 'hbagambiki@kigalicity.gov.rw', NULL, NULL, 'Chief Inspector', NULL, NULL, NULL, 1, 0, NULL, '2026-09-21 10:29:41', NULL, '$2y$12$2XNNnhX7eKLaLaosnBsumeop11KmOSM1jSZg8u9afSp0u0D7iy4vC', NULL, '2026-08-06 13:51:43', '2026-09-21 10:29:41'),
-(18, 'IYAMUREMYE Jean', 'jean.iyamuremye@kicukiro.gov.rw', 2, NULL, NULL, NULL, 'signatures/18-20260812101640.png', '2026-08-12 08:16:40', 1, 0, '2026-09-21 04:01:58', '2026-09-21 04:01:27', NULL, '$2y$12$N0r0QEtk2BEKEOS2f65yJe2WQMnJ/6TAtO8LmAiM/qq/E.KpxhpV6', '6kHqAv8UWxbIdZfzmcFL9gaw73pxfA3m4ZV5LcOg8Xktf8kiMpwZERqeBNUv', '2026-08-07 05:14:44', '2026-09-21 04:01:58'),
-(19, 'NSENGIMANA Private', 'private.nsengimana@gasabo.gov.rw', 1, NULL, NULL, '0783491088', NULL, NULL, 1, 0, NULL, '2026-09-17 04:48:10', NULL, '$2y$12$IqwrDLqvfPiGORiwZ8.hbuRb8MmJnyOM/bMoQet799SToJ/drn95q', 'eF9Rf1uYOx2LFFHNs56kyxtiZIHfyfftsAqBcpV8DnRE3acUmlqP8qaz22ul', '2026-08-10 05:59:20', '2026-09-17 04:48:10'),
-(20, 'NDAHIMANA', 'jndahimana@kigalicity.gov.rw', NULL, NULL, NULL, NULL, NULL, NULL, 1, 0, NULL, '2026-08-24 07:32:11', NULL, '$2y$12$30ZrK2l3QA5RwlRN0YyCjuqb25sw6VqcDZ9Ey0bmzB.mS2n4kOaAu', NULL, '2026-08-21 11:55:40', '2026-08-24 07:32:11'),
-(21, 'IGIHOZO Honorine', 'honorine.igihozo@nyarugenge.gov.rw', 3, NULL, NULL, NULL, NULL, NULL, 1, 0, NULL, '2026-09-16 05:39:05', NULL, '$2y$12$f8eyKbLsjVCVVBqvCPDe1ukD0S9ld55ZTqdyJ47sxj43usMUceUha', 'r0dfa19EMf2DGXjD9cVnOpwtR7gpKnVHC1OBYcgtmj8hoZy01Dgl52tx6VYw', '2026-08-25 10:09:41', '2026-09-16 05:39:05'),
-(22, 'MUGABO Serge', 'serge.mugabo@gasabo.gov.rw', 1, NULL, NULL, NULL, NULL, NULL, 1, 0, NULL, '2026-09-22 05:43:36', NULL, '$2y$12$9lzbRQOgp2KEf6a9NsNfbeDgpa2/de/HCGfHJjgIS4wRfVyJDvJIm', 'uy4DinM4MUrLdrgMOXgTzSUy8BMNTDpcZB25gK6TN2N6d4ZM42cbR1HYtDHQ', '2026-08-31 05:29:28', '2026-09-22 05:43:36'),
-(23, 'MUNYANEZA Honeste', 'honeste.munyaneza@nyarugenge.gov.rw', 3, NULL, NULL, NULL, NULL, NULL, 1, 0, NULL, '2026-09-21 06:51:24', NULL, '$2y$12$uBPAdtbvtiKzMmyk07e2vuLNdtCJ9sMZO0hSEXiwlSSHByYVk3jv2', 'O2bR1ZPHWwK1ehJs4LmM8un4EejlZhXgV8KeJc5AgRLuMlqXcYoUEGuLjs3H', '2026-08-31 05:33:14', '2026-09-21 06:51:24'),
-(24, 'UWERA Marie Josee', 'mj.uwera@kicukiro.gov.rw', 2, NULL, NULL, NULL, NULL, NULL, 1, 0, NULL, '2026-09-08 08:20:13', NULL, '$2y$12$uWfrT8gTM50NcoZbE/GTXOrFYPu1xCWY6qDhcL.qI82DfbaN5/Dye', 'DYz3SFOzaOQApg7QzyB18NT34uZW0OMoQ0FjdJEl6heOHJhqR05JROeIeLj3', '2026-08-31 05:35:37', '2026-09-08 08:20:13'),
-(25, 'UWERA Peace', 'peace.uwera@kicukiro.gov.rw', 2, NULL, NULL, NULL, NULL, NULL, 1, 0, NULL, '2026-09-15 02:26:41', NULL, '$2y$12$xG0wg8ENRG8KR.qQLLK8J.EQSSPJZofVNV9tU14HIpyonxlqLxdpm', 'b1lRLXIf22uFILPTxZEQjSlidzEnSYNxZEGQJCn4sjjcFYYkBUicmeQxCfra', '2026-08-31 05:36:52', '2026-09-15 02:26:41'),
-(26, 'NYIRAHABINEZA Marie Solange', 'msolange.nyirahabineza@nyarugenge.gov.rw', 3, NULL, NULL, NULL, NULL, NULL, 1, 0, NULL, '2026-08-31 06:49:42', NULL, '$2y$12$XFvcDzz1TIdMZ03uwA47w.7XpQ4/tBW05sh.bwPQKXM1w9ndVKWqG', 'LhvE2do2yKPZKcqrotBPsYM4dHv3TSWlJ6qHN1fq3lPVulJ7hlz87myhTh2O', '2026-08-31 06:39:35', '2026-08-31 06:49:42');
+(14, 'ITANGISHAKA Fidele', 'itangfidele@gmail.com', 2, NULL, 'Electrical and Mechanical Inspector', '0782253882', 'signatures/14-20260812101117.png', '2026-08-12 08:11:17', 1, 0, NULL, '2026-09-22 11:31:34', NULL, '$2y$12$uMR5lrSWII0r/UysdG2FCOQMaBwiPy3iT4E/nzKCACOH9clhrfypG', 'EbLgJgkOVv2y3gwms8BrRoUS8bGA7n8qVBopD3Q4dwzWuDoW4bOgxF9QkhhX', '2026-08-06 11:09:31', '2026-09-22 11:31:34'),
+(16, 'RUKUNDO Augustin', 'arukundo@kigalicity.gov.rw', NULL, NULL, 'Hygiene and Sanitation Specialist', '0782756565', 'signatures/n55xIy1SZ72mHemkPohT80C9SV2WgC8O4bCG7dM6.jpg', '2026-08-30 08:11:02', 1, 1, NULL, '2026-09-21 17:51:08', NULL, '$2y$12$d3U38LC1s7ewQ4tYSJibeurVyxFP.Ip7Uz9QAyz7bkdW6/53YU8EG', '4RpJyvFMMcLhM4g4AQgsMoxWiSHzIfJ1vjO0zhV5kaNh2AlQGdTMCZVUhZH5', '2026-08-06 11:34:33', '2026-09-22 15:25:21'),
+(17, 'Eng. BAGAMBIKI Hubert', 'hbagambiki@kigalicity.gov.rw', NULL, NULL, 'Chief Inspector', NULL, NULL, NULL, 1, 0, NULL, '2026-09-23 05:15:01', NULL, '$2y$12$2XNNnhX7eKLaLaosnBsumeop11KmOSM1jSZg8u9afSp0u0D7iy4vC', NULL, '2026-08-06 13:51:43', '2026-09-23 05:15:01'),
+(18, 'IYAMUREMYE Jean', 'jean.iyamuremye@kicukiro.gov.rw', 2, NULL, NULL, NULL, 'signatures/18-20260812101640.png', '2026-08-12 08:16:40', 1, 1, NULL, '2026-09-21 04:01:27', NULL, '$2y$12$.IEp1sma4uRFJ7d4fXOcoO6RhFpCDxuZ.sy2zVmXUfozSwZY0Xm7O', '6kHqAv8UWxbIdZfzmcFL9gaw73pxfA3m4ZV5LcOg8Xktf8kiMpwZERqeBNUv', '2026-08-07 05:14:44', '2026-09-22 15:26:28'),
+(19, 'NSENGIMANA Private', 'private.nsengimana@gasabo.gov.rw', 1, NULL, NULL, '0783491088', NULL, NULL, 1, 1, NULL, '2026-09-17 04:48:10', NULL, '$2y$12$qUOUdInFANG9F1/4injeWemGhR/qOgCQDVXNk5ywABYc.miFAiGnW', 'eF9Rf1uYOx2LFFHNs56kyxtiZIHfyfftsAqBcpV8DnRE3acUmlqP8qaz22ul', '2026-08-10 05:59:20', '2026-09-22 15:24:20'),
+(20, 'NDAHIMANA', 'jndahimana@kigalicity.gov.rw', NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, NULL, '2026-08-24 07:32:11', NULL, '$2y$12$2kyqr6KwomCGNP7KIRQa1u7oqcCgqJpH1ZpRi3o9pTR0w4RPwE9Dm', NULL, '2026-08-21 11:55:40', '2026-09-22 15:23:51'),
+(21, 'IGIHOZO Honorine', 'honorine.igihozo@nyarugenge.gov.rw', 3, NULL, NULL, NULL, NULL, NULL, 1, 1, NULL, '2026-09-16 05:39:05', NULL, '$2y$12$HaEZq62RfcIZNgTKfW87bejEBWYOSxw5xjDMwmKSQQ3W4fV.jL786', 'r0dfa19EMf2DGXjD9cVnOpwtR7gpKnVHC1OBYcgtmj8hoZy01Dgl52tx6VYw', '2026-08-25 10:09:41', '2026-09-22 15:22:46'),
+(22, 'MUGABO Serge', 'serge.mugabo@gasabo.gov.rw', 1, NULL, NULL, NULL, NULL, NULL, 1, 1, NULL, '2026-09-22 05:43:36', NULL, '$2y$12$UriD2r/XzbSl2yVE/InwIedtbmiH4Sb8GHvY0Dhj9vuvgvE1cJ8lu', 'uy4DinM4MUrLdrgMOXgTzSUy8BMNTDpcZB25gK6TN2N6d4ZM42cbR1HYtDHQ', '2026-08-31 05:29:28', '2026-09-22 15:23:13'),
+(23, 'MUNYANEZA Honeste', 'honeste.munyaneza@nyarugenge.gov.rw', 3, NULL, NULL, NULL, NULL, NULL, 1, 1, NULL, '2026-09-21 06:51:24', NULL, '$2y$12$EMgInRoIGrE2mbX.KPTEDOHlTWgDVUKVPj6oE6cwqla60L.5YUq8.', 'O2bR1ZPHWwK1ehJs4LmM8un4EejlZhXgV8KeJc5AgRLuMlqXcYoUEGuLjs3H', '2026-08-31 05:33:14', '2026-09-22 15:23:25'),
+(24, 'UWERA Marie Josee', 'mj.uwera@kicukiro.gov.rw', 2, NULL, NULL, NULL, NULL, NULL, 1, 1, NULL, '2026-09-08 08:20:13', NULL, '$2y$12$Yd3tGn6JmBcHZ4iMVqGG8us9iuEX8oHRkMW6RVlzrc6Dp6sgjpGh2', 'DYz3SFOzaOQApg7QzyB18NT34uZW0OMoQ0FjdJEl6heOHJhqR05JROeIeLj3', '2026-08-31 05:35:37', '2026-09-22 15:26:47'),
+(25, 'UWERA Peace', 'peace.uwera@kicukiro.gov.rw', 2, NULL, NULL, NULL, NULL, NULL, 1, 1, NULL, '2026-09-15 02:26:41', NULL, '$2y$12$zL2p8lErRkhlC8iBGQNGPOd5Q8rU7eQrNOH8tDBelwvaJh7I136yW', 'b1lRLXIf22uFILPTxZEQjSlidzEnSYNxZEGQJCn4sjjcFYYkBUicmeQxCfra', '2026-08-31 05:36:52', '2026-09-22 15:25:54'),
+(26, 'NYIRAHABINEZA Marie Solange', 'msolange.nyirahabineza@nyarugenge.gov.rw', 3, NULL, NULL, NULL, NULL, NULL, 1, 1, NULL, '2026-08-31 06:49:42', NULL, '$2y$12$tjLhP6eruaaxoXJtHTyOnOze4H7UtWEwVqDNbItBhdS.QTTfwrIuW', 'LhvE2do2yKPZKcqrotBPsYM4dHv3TSWlJ6qHN1fq3lPVulJ7hlz87myhTh2O', '2026-08-31 06:39:35', '2026-09-22 15:24:32');
 
 -- --------------------------------------------------------
 
@@ -15716,13 +16062,13 @@ ALTER TABLE `document_transitions`
 -- AUTO_INCREMENT for table `entities`
 --
 ALTER TABLE `entities`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=349;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=359;
 
 --
 -- AUTO_INCREMENT for table `entity_upis`
 --
 ALTER TABLE `entity_upis`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=396;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=406;
 
 --
 -- AUTO_INCREMENT for table `failed_jobs`
@@ -15758,13 +16104,13 @@ ALTER TABLE `fine_payments`
 -- AUTO_INCREMENT for table `inspections`
 --
 ALTER TABLE `inspections`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=361;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=371;
 
 --
 -- AUTO_INCREMENT for table `inspection_answers`
 --
 ALTER TABLE `inspection_answers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12282;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12561;
 
 --
 -- AUTO_INCREMENT for table `inspection_faults`
@@ -15776,13 +16122,13 @@ ALTER TABLE `inspection_faults`
 -- AUTO_INCREMENT for table `inspection_photos`
 --
 ALTER TABLE `inspection_photos`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=404;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=416;
 
 --
 -- AUTO_INCREMENT for table `inspection_team`
 --
 ALTER TABLE `inspection_team`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1293;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1324;
 
 --
 -- AUTO_INCREMENT for table `jobs`
