@@ -52,9 +52,27 @@ class MyBoxController extends Controller
             if ($has('document.approve'))         $statuses[] = Document::PENDING_CHIEF;
             if ($has('letter.reference'))         $statuses[] = Document::APPROVED;
 
-            if ($statuses) {
-                $awaiting = $scoped(Document::with('creator')->whereIn('status', $statuses))
-                    ->orderBy('submitted_at')->get();
+            /* The Mayors approve closure notices and nothing else, so only
+               those reach their desk for signature. Restricted to the
+               approval step alone — whatever else they are entitled to see
+               waiting on them arrives unfiltered, as it does for anyone. */
+            $closureOnly = ! $has('document.approve') && $has('document.approve.closure');
+
+            if ($statuses || $closureOnly) {
+                $awaiting = $scoped(Document::with('creator')->where(
+                    function ($q) use ($statuses, $closureOnly) {
+                        if ($statuses) {
+                            $q->whereIn('status', $statuses);
+                        }
+
+                        if ($closureOnly) {
+                            $q->orWhere(fn ($c) => $c
+                                ->where('status', Document::PENDING_CHIEF)
+                                ->where('type', 'letter')
+                                ->whereIn('letter_type', Document::CLOSURE_LETTERS));
+                        }
+                    }
+                ))->orderBy('submitted_at')->get();
             }
 
             $returned = Document::where('created_by', $user->id)

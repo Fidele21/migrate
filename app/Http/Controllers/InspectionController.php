@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\ChecklistTemplate;
+use App\Models\Document;
+use App\Models\DocumentTransition;
 use App\Models\Entity;
 use App\Models\EntityUpi;
 use App\Models\Inspection;
@@ -1097,5 +1099,80 @@ class InspectionController extends Controller
     private function authorizeAbility(string $permission): void
     {
         abort_unless(auth()->user()->can($permission), 403);
+    }
+
+    /**
+     * Remove an inspection that should never have been recorded.
+     *
+     * This is for the wrong premises, or a visit entered twice - not for
+     * an inspection somebody has come to regret. Only an inspector who was
+     * there may do it, and only while nothing has been put on the record:
+     * once a report carries a signature or a letter has been issued, the
+     * visit is part of an enforcement trail and stays.
+     *
+     * Nothing is destroyed. The inspection, its letters and its fines are
+     * all soft deleted, and who removed it and why is kept on the row.
+     */
+    public function destroy(Request $request, Inspection $inspection)
+    {
+        // The team is the authority here, not the district or the rank.
+        // conductedBy() covers the lead inspector and every team member.
+        abort_unless($inspection->conductedBy($request->user()), 403,
+            'Only an inspector who carried out this visit may delete it.');
+
+        $data = $request->validate([
+            'reason'  => ['required', 'string', 'max:300'],
+            'confirm' => ['required', 'in:DELETE'],
+        ], [
+            'confirm.in' => 'Type DELETE to confirm that the inspection should be removed.',
+        ]);
+
+        $report = $inspection->report();
+
+        // A signature is the point of no return. Sealed or not, once
+        // somebody has put their name to the report the visit is evidence.
+        if ($report && ($report->sealed_at || $report->signatures()->exists())) {
+            return back()->withErrors([
+                'reason' => 'The report for this inspection has been signed, so it can no longer be deleted.',
+            ]);
+        }
+
+        if ($inspection->documents()->where('status', Document::ISSUED)->exists()) {
+            return back()->withErrors([
+                'reason' => 'A letter has been issued for this inspection, so it can no longer be deleted.',
+            ]);
+        }
+
+        DB::transaction(function () use ($inspection, $data, $report) {
+            // Recorded against the report where there is one, so the
+            // deletion leaves a trail that outlives the rows it describes.
+            if ($report) {
+                DocumentTransition::create([
+                    'document_id' => $report->id,
+                    'from_status' => $report->status,
+                    'to_status'   => Document::CANCELLED,
+                    'actor_id'    => auth()->id(),
+                    'actor_role'  => auth()->user()->roles->pluck('name')->first() ?? 'Inspector',
+                    'comment'     => 'Inspection deleted — ' . $data['reason'],
+                    'ip_address'  => request()->ip(),
+                ]);
+            }
+
+            // Both soft delete, so a letter drafted against this visit and
+            // any fine proposed on it can be recovered with it. Anything
+            // signed or issued was refused above, so only drafts get here.
+            $inspection->documents()->get()->each->delete();
+            $inspection->fines()->get()->each->delete();
+
+            $inspection->forceFill([
+                'deleted_by'     => auth()->id(),
+                'deleted_reason' => $data['reason'],
+            ])->save();
+
+            $inspection->delete();
+        });
+
+        return redirect()->route('inspection.drafts')
+            ->with('status', 'The inspection has been deleted and the reason recorded.');
     }
 }

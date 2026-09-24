@@ -114,6 +114,7 @@
               {{ $u->last_login_at?->format('j M Y, H:i') ?? 'Never' }}
             </td>
             <td class="num">
+              <a href="{{ route('users.edit', $u) }}" class="btn btn-ghost btn-sm">Edit</a>
               @if($u->id !== auth()->id())
                 <form method="post" action="{{ route('users.reset', $u) }}" style="display:inline"
                       onsubmit="return confirm('Issue a new temporary password for {{ $u->name }}? Any current password will stop working immediately.')">

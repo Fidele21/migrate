@@ -25,10 +25,13 @@ use Spatie\Permission\Models\Role;
 class UserController extends Controller
 {
     /** Roles that must be bound to exactly one district. */
-    private const DISTRICT_BOUND = ['Inspector', 'Lead Inspector', 'Director of Inspection'];
+    private const DISTRICT_BOUND = ['Inspector', 'Director of Inspection', 'DEA'];
 
     /** Roles that operate across all districts. */
-    private const CITY_WIDE = ['Senior Inspector', 'Chief Inspector', 'Administrator'];
+    private const CITY_WIDE = [
+        'Senior Inspector', 'Chief Inspector', 'Administrator',
+        'Lord Mayor', 'Vice Mayor',
+    ];
 
     public function index()
     {
@@ -60,16 +63,7 @@ class UserController extends Controller
             'phone'           => ['nullable', 'string', 'max:30'],
         ]);
 
-        // Enforce the scoping rules rather than trusting the form.
-        if (in_array($data['role'], self::DISTRICT_BOUND, true) && empty($data['district_id'])) {
-            throw ValidationException::withMessages([
-                'district_id' => "A {$data['role']} must be assigned to exactly one district.",
-            ]);
-        }
-
-        if (in_array($data['role'], self::CITY_WIDE, true)) {
-            $data['district_id'] = null;   // city-wide roles are never district-bound
-        }
+        $data = $this->applyScopeRules($data);
 
         // Generated rather than chosen by the administrator, so that nobody
         // but the holder ever knows a password this account will accept.
@@ -96,6 +90,83 @@ class UserController extends Controller
             ->with('reset_email', $user->email)
             ->with('reset_password', $temporary)
             ->with('reset_delivered', $delivered);
+    }
+
+    public function edit(User $user)
+    {
+        return view('users.edit', [
+            'user'          => $user->load('roles'),
+            'roles'         => Role::orderBy('name')->pluck('name'),
+            'districts'     => District::orderBy('name')->get(),
+            'districtBound' => self::DISTRICT_BOUND,
+            'cityWide'      => self::CITY_WIDE,
+        ]);
+    }
+
+    /**
+     * Correct an account's details.
+     *
+     * Covers who the person is, how they are reached and what they may do.
+     * Passwords are not touched here - those go out by email and are reset
+     * from the accounts list, so that an administrator never sets one.
+     */
+    public function update(Request $request, User $user)
+    {
+        $data = $request->validate([
+            'name'            => ['required', 'string', 'max:120'],
+            'email'           => ['required', 'email', 'max:180', Rule::unique('users', 'email')->ignore($user->id)],
+            'role'            => ['required', Rule::in(Role::pluck('name')->all())],
+            'district_id'     => ['nullable', 'exists:districts,id'],
+            'employee_number' => ['nullable', 'string', 'max:40'],
+            'phone'           => ['nullable', 'string', 'max:30'],
+        ]);
+
+        $data = $this->applyScopeRules($data);
+
+        // An administrator changing their own role could strip the very
+        // permission that lets anyone administer accounts, leaving the
+        // system with no way back in. Reached through the form rather than
+        // aborting, because it is an easy mistake to make.
+        if ($user->id === auth()->id() && ! $user->hasRole($data['role'])) {
+            throw ValidationException::withMessages([
+                'role' => 'You cannot change your own role. Ask another administrator to do it.',
+            ]);
+        }
+
+        $user->update([
+            'name'            => $data['name'],
+            'email'           => $data['email'],
+            'district_id'     => $data['district_id'] ?? null,
+            'employee_number' => $data['employee_number'] ?? null,
+            'phone'           => $data['phone'] ?? null,
+        ]);
+
+        // syncRoles rather than assignRole: an account holds one role here,
+        // and the old one has to go with the change.
+        $user->syncRoles([$data['role']]);
+
+        return redirect()->route('users.index')
+            ->with('status', "{$user->name}'s account has been updated.");
+    }
+
+    /**
+     * Keep role and district consistent, rather than trusting the form.
+     *
+     * Shared by creation and editing so the two can never drift apart.
+     */
+    private function applyScopeRules(array $data): array
+    {
+        if (in_array($data['role'], self::DISTRICT_BOUND, true) && empty($data['district_id'])) {
+            throw ValidationException::withMessages([
+                'district_id' => "A {$data['role']} must be assigned to exactly one district.",
+            ]);
+        }
+
+        if (in_array($data['role'], self::CITY_WIDE, true)) {
+            $data['district_id'] = null;   // city-wide roles are never district-bound
+        }
+
+        return $data;
     }
 
     /** Deactivate rather than delete. Accounts appear in the audit trail. */

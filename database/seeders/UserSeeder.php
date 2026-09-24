@@ -25,7 +25,6 @@ class UserSeeder extends Seeder
             ['Director Gasabo',       'director.gasabo@kigalicity.gov.rw',     'GASABO',     'Director of Inspection'],
             ['Director Kicukiro',     'director.kicukiro@kigalicity.gov.rw',   'KICUKIRO',   'Director of Inspection'],
             ['Director Nyarugenge',   'director.nyarugenge@kigalicity.gov.rw', 'NYARUGENGE', 'Director of Inspection'],
-            ['Lead Inspector Gasabo', 'lead.gasabo@kigalicity.gov.rw',         'GASABO',     'Lead Inspector'],
             ['Eugene',                'eugene@kigalicity.gov.rw',              'GASABO',     'Inspector'],
             ['Thierry',               'thierry@kigalicity.gov.rw',             'KICUKIRO',   'Inspector'],
             ['Idesbald',              'idesbald@kigalicity.gov.rw',            'NYARUGENGE', 'Inspector'],

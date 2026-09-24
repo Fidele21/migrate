@@ -21,7 +21,6 @@ class ShowcaseController extends Controller
         'Chief Inspector'        => 5,
         'Senior Inspector'       => 4,
         'Director of Inspection' => 3,
-        'Lead Inspector'         => 2,
         'Inspector'              => 1,
         'Administrator'          => 0,
     ];

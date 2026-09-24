@@ -25,7 +25,8 @@ use Spatie\Permission\Models\Role;
 class FineAdjustSeeder extends Seeder
 {
     private const GRANTS = [
-        'fine.adjust' => ['Chief Inspector', 'Senior Inspector', 'Director of Inspection'],
+        'fine.adjust' => ['Chief Inspector', 'Senior Inspector', 'Director of Inspection',
+                           'DEA', 'Lord Mayor', 'Vice Mayor'],
     ];
 
     public function run(): void

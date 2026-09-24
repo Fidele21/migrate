@@ -58,8 +58,26 @@ class DocumentPolicy
             return false;   // not a legal move from here
         }
 
-        return $user->can($permission)
-            && $user->coversDistrict($document->district_id);
+        $held = $user->can($permission)
+            || $this->mayApproveThisClosure($user, $document, $permission);
+
+        return $held && $user->coversDistrict($document->district_id);
+    }
+
+    /**
+     * The Mayors' narrow approval.
+     *
+     * Closing a premises is a decision the city carries politically, so the
+     * Lord Mayor and the Vice Mayor sign off a closure notice themselves.
+     * It buys them nothing anywhere else: the permission is additive and
+     * reaches only the approval step of a closure letter, which is why it
+     * is checked here rather than widening document.approve.
+     */
+    private function mayApproveThisClosure(User $user, Document $document, string $permission): bool
+    {
+        return $permission === 'document.approve'
+            && $document->isClosureLetter()
+            && $user->can('document.approve.closure');
     }
 
     public function submit(User $user, Document $document): bool

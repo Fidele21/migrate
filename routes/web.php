@@ -91,6 +91,9 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
     Route::get('/inspections/{inspection}/edit', [InspectionController::class, 'edit'])->name('inspection.edit');
     Route::get('/inspections/{inspection}/word', [InspectionController::class, 'word'])->name('inspection.word');
     Route::put('/inspections/{inspection}',      [InspectionController::class, 'update'])->name('inspection.update');
+    // Ownership is the gate, not a permission: the controller admits only
+    // an inspector who was on the visit.
+    Route::delete('/inspections/{inspection}',   [InspectionController::class, 'destroy'])->name('inspection.destroy');
 
     /* ---- Premises ---- */
     Route::get('/entity/{entity}',                     [EntityController::class, 'show'])->name('entity.show');
@@ -175,9 +178,10 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         Route::get('/users',                        [UserController::class, 'index'])->name('users.index');
         Route::get('/users/create',                 [UserController::class, 'create'])->name('users.create');
         Route::post('/users',                       [UserController::class, 'store'])->name('users.store');
+        Route::get('/users/{user}/edit',            [UserController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{user}',                 [UserController::class, 'update'])->name('users.update');
         Route::post('/users/{user}/toggle',         [UserController::class, 'toggle'])->name('users.toggle');
         Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset');
-        Route::delete('/inspections/{inspection}',  [InspectionController::class, 'destroy'])->name('inspection.destroy');
     });
 
     /* ---- Roads ---- */

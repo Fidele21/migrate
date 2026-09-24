@@ -33,6 +33,22 @@ class Document extends Model
     public const ISSUED           = 'issued';
     public const CANCELLED        = 'cancelled';
 
+    /**
+     * Letter types that shut a premises, defined in config/letters.php.
+     *
+     * Held here because who may approve one is a rule about authority, not
+     * about wording: closing a business is the Mayor's call, so the two
+     * types have to be nameable from the policy.
+     */
+    public const CLOSURE_LETTERS = ['closure_permanent', 'closure_temporary'];
+
+    /** Does this letter order a premises closed, permanently or temporarily? */
+    public function isClosureLetter(): bool
+    {
+        return $this->type === 'letter'
+            && in_array($this->letter_type, self::CLOSURE_LETTERS, true);
+    }
+
     protected $fillable = [
         'type', 'version', 'supersedes_id', 'inspection_id', 'status',
         'current_holder_id', 'district_id', 'reference_number',

@@ -25,6 +25,9 @@ class RoadPermissionSeeder extends Seeder
         'Senior Inspector',
         'Director of Inspection',
         'Inspector',
+        'DEA',
+        'Lord Mayor',
+        'Vice Mayor',
     ];
 
     public function run(): void

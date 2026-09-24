@@ -14,8 +14,18 @@ use Spatie\Permission\PermissionRegistrar;
  *   Chief Inspector          final approval and signature, all districts
  *   Senior Inspector         verification at CoK office, all districts
  *   Director of Inspection   verification and signature, one district
- *   Lead Inspector           field work, one district
  *   Inspector                field work, one district
+ *
+ * OVERSIGHT (read the record, never act on it):
+ *   Lord Mayor               sees the whole city, as the Chief Inspector does
+ *   Vice Mayor               sees the whole city, as the Chief Inspector does
+ *   DEA                      sees one district, as its Director does
+ *
+ * These three sit outside the approval chain by design. They may read
+ * every inspection in their scope and export from it, but they hold no
+ * signing, verification, approval or issuing permission, and they raise
+ * no inspection of their own - oversight must not be able to author the
+ * record it oversees.
  *
  * SUPPORTING ROLES (outside the approval chain):
  *   Secretary                letter reference, printing, stamping, scan
@@ -52,6 +62,7 @@ class RolePermissionSeeder extends Seeder
             'document.verify.district',
             'document.verify.city',
             'document.approve',
+            'document.approve.closure',
             'document.return',
             'document.issue',
 
@@ -90,11 +101,25 @@ class RolePermissionSeeder extends Seeder
             'audit.view.district',
         ]);
 
+        $chief = array_merge($field, [
+            'inspection.view.all', 'inspection.view.district',
+            'inspection.archive',
+            'document.verify.district', 'document.verify.city',
+            'document.approve', 'document.return', 'document.issue',
+            'fine.confirm',
+            'checklist.publish',
+            'audit.view.all',
+        ]);
+
+        /* The Mayors and the DEA work from the same reach as the Chief
+           Inspector, with final approval withheld: that signature is the
+           Chief Inspector's, and giving it away would leave the approval
+           step with no single owner. */
+        $oversight = array_values(array_diff($chief, ['document.approve']));
+
         $roles = [
 
             'Inspector' => $field,
-
-            'Lead Inspector' => $district,
 
             'Director of Inspection' => array_merge($district, [
                 'inspection.archive',
@@ -110,15 +135,17 @@ class RolePermissionSeeder extends Seeder
                 'audit.view.all',
             ]),
 
-            'Chief Inspector' => array_merge($field, [
-                'inspection.view.all', 'inspection.view.district',
-                'inspection.archive',
-                'document.verify.district', 'document.verify.city',
-                'document.approve', 'document.return', 'document.issue',
-                'fine.confirm',
-                'checklist.publish',
-                'audit.view.all',
-            ]),
+            'Chief Inspector' => $chief,
+
+            /* The Chief Inspector's reach without the final signature, and
+               without the closure approval the Mayors carry. */
+            'DEA' => $oversight,
+
+            /* As DEA, plus the one signature that is theirs: a notice that
+               shuts a premises, permanently or temporarily. */
+            'Lord Mayor' => array_merge($oversight, ['document.approve.closure']),
+
+            'Vice Mayor' => array_merge($oversight, ['document.approve.closure']),
 
             'Secretary' => [
                 'inspection.view.all', 'entity.search', 'checklist.view',

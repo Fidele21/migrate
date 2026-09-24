@@ -40,7 +40,6 @@ class PermissionTest extends TestCase
         foreach ([
             ['Senior Inspector', null],
             ['Director of Inspection', 'GASABO'],
-            ['Lead Inspector', 'GASABO'],
             ['Inspector', 'GASABO'],
             ['Administrator', null],
         ] as [$role, $district]) {

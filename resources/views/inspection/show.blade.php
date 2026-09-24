@@ -707,7 +707,12 @@
 
 {{-- ---------- Delete the inspection ---------- --}}
 @php
-  $mayDeleteInspection = ! $sealed && ($mine || auth()->user()->can('document.approve'));
+  // Mirrors InspectionController::destroy(): only an inspector who was on
+  // the visit, and only while nothing has been signed or issued.
+  $mayDeleteInspection = $mine
+      && ! $sealed
+      && ! ($report && $report->signatures()->exists())
+      && ! $inspection->documents()->where('status', \App\Models\Document::ISSUED)->exists();
 @endphp
 
 @if($mayDeleteInspection)

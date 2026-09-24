@@ -27,7 +27,7 @@ class AssignmentController extends Controller
     private const MAY_ASSIGN_TO = [
         'Chief Inspector'        => ['Senior Inspector', 'Director of Inspection'],
         'Senior Inspector'       => ['Director of Inspection'],
-        'Director of Inspection' => ['Inspector', 'Lead Inspector'],
+        'Director of Inspection' => ['Inspector'],
     ];
 
     /**

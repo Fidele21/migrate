@@ -35,15 +35,22 @@ class DashboardController extends Controller
             'Secretary'        => $this->secretary($user),
             'Recovery Officer' => $this->recovery($user),
             'Administrator'    => $this->administrator($user),
+            // The Mayors and the DEA oversee rather than inspect, so they
+            // read the same dashboard as the officers they oversee: the
+            // Mayors city-wide like a Chief Inspector, the DEA within its
+            // own district like a Director.
             'Chief Inspector',
             'Senior Inspector',
-            'Director of Inspection' => $this->supervisor($user, $role),
+            'Director of Inspection',
+            'Lord Mayor',
+            'Vice Mayor',
+            'DEA'              => $this->supervisor($user, $role),
             default            => $this->inspector($user, $role),
         };
     }
 
     /* ==============================================================
-       Inspector and Lead Inspector — their own field work
+       Inspector — their own field work
        ============================================================== */
     private function inspector(User $user, string $role)
     {
