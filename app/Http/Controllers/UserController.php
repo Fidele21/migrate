@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 
+use App\Mail\AccountCredentials;
 use App\Models\District;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
@@ -52,7 +54,6 @@ class UserController extends Controller
         $data = $request->validate([
             'name'            => ['required', 'string', 'max:120'],
             'email'           => ['required', 'email', 'max:180', 'unique:users,email'],
-            'password'        => ['required', 'string', 'min:8', 'confirmed'],
             'role'            => ['required', Rule::in(Role::pluck('name')->all())],
             'district_id'     => ['nullable', 'exists:districts,id'],
             'employee_number' => ['nullable', 'string', 'max:40'],
@@ -70,20 +71,31 @@ class UserController extends Controller
             $data['district_id'] = null;   // city-wide roles are never district-bound
         }
 
+        // Generated rather than chosen by the administrator, so that nobody
+        // but the holder ever knows a password this account will accept.
+        $temporary = $this->temporaryPassword();
+
         $user = User::create([
-            'name'            => $data['name'],
-            'email'           => $data['email'],
-            'password'        => Hash::make($data['password']),
-            'district_id'     => $data['district_id'] ?? null,
-            'employee_number' => $data['employee_number'] ?? null,
-            'phone'           => $data['phone'] ?? null,
-            'is_active'       => true,
+            'name'                 => $data['name'],
+            'email'                => $data['email'],
+            'password'             => Hash::make($temporary),
+            'district_id'          => $data['district_id'] ?? null,
+            'employee_number'      => $data['employee_number'] ?? null,
+            'phone'                => $data['phone'] ?? null,
+            'is_active'            => true,
+            'must_change_password' => true,
         ]);
 
         $user->assignRole($data['role']);
 
+        $delivered = $this->emailCredentials($user, $temporary, false);
+
         return redirect()->route('users.index')
-            ->with('status', "Account created for {$user->name} as {$data['role']}.");
+            ->with('status', "Account created for {$user->name} as {$data['role']}.")
+            ->with('reset_user', $user->name)
+            ->with('reset_email', $user->email)
+            ->with('reset_password', $temporary)
+            ->with('reset_delivered', $delivered);
     }
 
     /** Deactivate rather than delete. Accounts appear in the audit trail. */
@@ -124,10 +136,37 @@ class UserController extends Controller
         // Any active sessions for this account are no longer valid.
         DB::table('sessions')->where('user_id', $user->id)->delete();
 
+        $delivered = $this->emailCredentials($user, $temporary, true);
+
         return back()
             ->with('reset_user', $user->name)
             ->with('reset_email', $user->email)
-            ->with('reset_password', $temporary);
+            ->with('reset_password', $temporary)
+            ->with('reset_delivered', $delivered);
+    }
+
+    /**
+     * Attempt to send the temporary password to its holder.
+     *
+     * A failure is reported and returned rather than thrown. The account has
+     * already been created or reset by this point, and losing that to a mail
+     * server problem would leave the administrator with a password nobody
+     * can see. The screen keeps showing it either way, so a bounced email
+     * only means it has to be handed over in person.
+     */
+    private function emailCredentials(User $user, string $temporary, bool $isReset): bool
+    {
+        try {
+            Mail::to($user->email)->send(
+                new AccountCredentials($user, $temporary, $isReset, auth()->user()?->name)
+            );
+
+            return true;
+        } catch (\Throwable $e) {
+            report($e);
+
+            return false;
+        }
     }
 
     /**

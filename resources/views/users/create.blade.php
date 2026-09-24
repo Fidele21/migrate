@@ -7,8 +7,8 @@
   <div>
     <div class="crumb">Administration</div>
     <h2>Create Account</h2>
-    <p>Set an initial password and hand it to the user. They will be required to change it
-       before they can use the platform.</p>
+    <p>A temporary password is generated and emailed to the new account holder. They will be
+       required to change it before they can use the platform.</p>
   </div>
   <div class="head-actions">
     <a href="{{ route('users.index') }}" class="btn btn-ghost">Back to accounts</a>
@@ -81,22 +81,10 @@
   </section>
 
   <section>
-    <h3>Initial password</h3>
-    <div class="desc">Give this to the user directly. They must change it at first sign-in,
-      after which you will no longer know their password.</div>
-
-    <div style="display:grid;gap:15px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
-      <div>
-        <label class="fl">Password <span style="color:var(--red)">*</span></label>
-        <input class="fi" type="text" name="password" id="pw" required minlength="8">
-        <div class="hint">At least 8 characters. Shown as text so you can copy it accurately.</div>
-      </div>
-      <div>
-        <label class="fl">Confirm password <span style="color:var(--red)">*</span></label>
-        <input class="fi" type="text" name="password_confirmation" id="pw2" required minlength="8">
-        <div class="hint"><a href="#" id="gen" style="color:var(--blue);font-weight:600">Generate a strong password</a></div>
-      </div>
-    </div>
+    <h3>Sign-in details</h3>
+    <div class="desc">A temporary password is generated when the account is created and
+      emailed to the address above. It is also shown to you once, in case the email does
+      not arrive. The holder must replace it before they can use the platform.</div>
 
     <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
       <button type="submit" class="btn btn-success">Create Account</button>
@@ -126,17 +114,6 @@ function sync() {
 }
 role.addEventListener('change', sync);
 sync();
-
-document.getElementById('gen').addEventListener('click', function (e) {
-  e.preventDefault();
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
-  let out = '';
-  const buf = new Uint32Array(14);
-  crypto.getRandomValues(buf);
-  buf.forEach(n => out += chars[n % chars.length]);
-  document.getElementById('pw').value = out;
-  document.getElementById('pw2').value = out;
-});
 </script>
 
 @endsection

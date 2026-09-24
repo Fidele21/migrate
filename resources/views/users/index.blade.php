@@ -18,10 +18,23 @@
 @if(session('reset_password'))
   <div class="reset-card">
     <div class="rc-head">Temporary password issued</div>
+
+    @if(session('reset_delivered'))
+      <p class="rc-note" style="border-left:3px solid var(--green);padding-left:10px">
+        <strong style="color:#00612B">Emailed to {{ session('reset_email') }}.</strong>
+        {{ session('reset_user') }} can sign in without your help. The password is repeated
+        below only in case the email does not reach them.
+      </p>
+    @else
+      <p class="rc-note" style="border-left:3px solid var(--red);padding-left:10px">
+        <strong style="color:var(--red)">The email could not be sent.</strong>
+        The password below is the only copy — give it to {{ session('reset_user') }}
+        directly. It is shown once and cannot be recovered; if it is lost, reset again.
+      </p>
+    @endif
+
     <p class="rc-note">
-      Give this to {{ session('reset_user') }} directly. It is shown once and
-      cannot be recovered — if it is lost, reset again. They must set their own
-      password when they sign in.
+      They must set their own password when they sign in.
     </p>
     <div class="rc-grid">
       <div>
