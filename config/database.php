@@ -68,7 +68,11 @@ return [
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
             'prefix' => '',
             'prefix_indexes' => true,
-            'strict' => true,
+            // Strict mode stays on everywhere except where the local server
+            // cannot cope with it. MariaDB 10.4 misreads a window function
+            // inside a derived table under ONLY_FULL_GROUP_BY and throws
+            // error 1140; 10.11 on the server is fine, so this defaults on.
+            'strict' => env('DB_STRICT', true),
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
@@ -88,7 +92,11 @@ return [
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
             'prefix' => '',
             'prefix_indexes' => true,
-            'strict' => true,
+            // Strict mode stays on everywhere except where the local server
+            // cannot cope with it. MariaDB 10.4 misreads a window function
+            // inside a derived table under ONLY_FULL_GROUP_BY and throws
+            // error 1140; 10.11 on the server is fine, so this defaults on.
+            'strict' => env('DB_STRICT', true),
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
